@@ -1,0 +1,39 @@
+gen_data_dir: "TowerEval-Data-v0.1/data/instructions_data/0_shot"
+eval_data_dir: "TowerEval-Data-v0.1/data/raw_data"
+gen_output_dir: "TowerEval-Data-v0.1/generations/0_shot"
+eval_output_dir: "TowerEval-Data-v0.1/evaluations/0_shot"
+tasks: 
+  - name: ape
+    subtasks:
+      nllb_3b_wmt23.de-en:
+      nllb_3b_wmt23.en-de: 
+      nllb_3b_wmt23.en-zh: 
+        eval_args:
+          metrics:
+            ter:
+              asian_support: True
+            chrf:
+            bleu:
+              tokenizer: zh
+            comet:
+              batch_size: 16
+            comet_kiwi:
+              batch_size: 16
+      nllb_3b_wmt23.ru-en:
+    metrics:
+      ter:
+        asian_support: True
+      chrf:
+      comet:
+        batch_size: 16
+      comet_kiwi:
+        batch_size: 16
+      bleu:
+models:
+  - name: gpt-4
+    type: open-ai
+    arguments:
+      model: "gpt-4"
+      max_tokens: 1024
+      debug: True
+      retry_max_attempts: 200

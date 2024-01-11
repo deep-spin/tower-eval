@@ -1,0 +1,2 @@
+class MetricInputException(Exception):
+    pass

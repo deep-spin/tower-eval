@@ -1,0 +1,51 @@
+[tool.poetry]
+name = "tower-eval"
+version = "0.1.0"
+description = "Provides evaluation metrics for the Tower tasks"
+authors = [
+    "Amin Farajian <amin@unbabel.com>",
+    "José Pombal <jose.pombal@unbabel.com>"
+    ]
+maintainers = [
+    "Amin Farajian <amin@unbabel.com>",
+    "José Pombal <jose.pombal@unbabel.com>"
+    ]
+readme = "README.md"
+
+[tool.poetry.scripts]
+ml-metrics = "tower-eval.cli:compute_metrics"
+
+[tool.poetry.dependencies]
+python = ">=3.9.0,<3.13"
+sacrebleu = {extras = ["ko"], version = "^2.3.1"}
+mecab-ko = "^1.0.0"
+errant = ">=2.3.3"
+unbabel-comet = {git = "https://github.com/Unbabel/COMET.git", branch = "master"}
+scikit-learn = "^1.3"
+scipy = "^1.11"
+boto3 = "^1.28"
+loguru = "^0.7"
+openai = "^0.28"
+tenacity = "^8.2"
+text-generation = "^0.6"
+jinja2 = "^3.1"
+psutil = "^5.9.5"
+pymorphy2 = "^0.9"
+nest-asyncio = "^1.5"
+wandb = "^0.15.12"
+jupyter = "^1.0.0"
+seaborn = "^0.13.0"
+spacy = "^3.7.2"
+nltk = "^3.8.1"
+mosestokenizer = "^1.2.1"
+sentence-transformers = "^2.2.2"
+faiss-cpu = "^1.7.4"
+python-dotenv = "^1.0.0"
+
+[tool.poetry.dev-dependencies]
+mock = ">=3.0.5,<4.0.0"
+coverage = ">=5.5.0,<6.0.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

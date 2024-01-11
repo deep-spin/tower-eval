@@ -1,0 +1,126 @@
+gen_data_dir: "TowerEval-Data-v0.1/data/instructions_data/0_shot_tower_instruct_prompt"
+eval_data_dir: "TowerEval-Data-v0.1/data/raw_data"
+gen_output_dir: "TowerEval-Data-v0.1/generations/0_shot_tower_instruct_prompt"
+eval_output_dir: "TowerEval-Data-v0.1/evaluations/0_shot_tower_instruct_prompt"
+tasks: 
+  - name: mt
+    subtasks:
+      flores.en-de:
+      flores.en-fr:
+      flores.en-pt:
+      flores.en-nl:
+      flores.en-es:
+      flores.en-it:
+      flores.en-zh:
+        gen_args:
+        eval_args:
+          metrics:
+            chrf:
+            bleu:
+              tokenizer: zh
+            comet:
+              batch_size: 16
+      flores.en-ko:
+        gen_args:
+        eval_args:
+          metrics:
+            chrf:
+            bleu:
+              tokenizer: ko-mecab
+            comet:
+              batch_size: 16
+      flores.en-ru:
+      flores.de-en:
+      flores.fr-en:
+      flores.pt-en:
+      flores.nl-en:
+      flores.es-en:
+      flores.it-en:
+      flores.zh-en:
+      flores.ko-en:
+      flores.ru-en:
+      wmt23.en-de:
+      wmt23.en-ru:
+      wmt23.en-zh:
+        eval_args:
+          metrics:
+            chrf:
+            bleu:
+              tokenizer: zh
+            comet:
+              batch_size: 16
+      wmt23.de-en:
+      wmt23.ru-en:
+      wmt23.zh-en:
+      tico19.en-es:
+      tico19.en-fr:
+      tico19.en-pt:
+      tico19.en-ru:
+      tico19.en-zh:
+        gen_args:
+        eval_args:
+          metrics:
+            chrf:
+            bleu:
+              tokenizer: zh
+            comet:
+              batch_size: 16
+    metrics:
+      chrf:
+      bleu:
+      comet:
+        batch_size: 16
+  - name: ape
+    subtasks:
+      nllb_3b_wmt23.de-en:
+      nllb_3b_wmt23.en-de: 
+      nllb_3b_wmt23.en-zh: 
+        eval_args:
+          metrics:
+            ter:
+              asian_support: True
+            chrf:
+            bleu:
+              tokenizer: zh
+            comet:
+              batch_size: 16
+            comet_kiwi:
+              batch_size: 16
+      nllb_3b_wmt23.zh-en:
+      nllb_3b_wmt23.ru-en:
+      nllb_3b_wmt23.en-ru:
+    metrics:
+      ter:
+        asian_support: True
+      chrf:
+      comet:
+        batch_size: 16
+      comet_kiwi:
+        batch_size: 16
+      bleu:
+  - name: ner
+    subtasks:
+      multiconer2023.en:
+      multiconer2023.de:
+      multiconer2023.fr:
+      multiconer2023.es:
+      multiconer2023.it:
+      multiconer2023.pt:
+      multiconer2023.zh:
+    metrics:
+      f1sequence:
+        hypothesis_format: "text-tuple-list"
+        reference_format: "jsonl"
+        tokenize_hypothesis: False
+        default_noent_tag: "O"
+        valid_ner_tags: ["Person", "Location", "Group", "Product", "CreativeWorks", "Medical"]
+models:
+  - name: TowerInstruct-7B-v0.1
+    type: vllm
+    arguments:
+      model_dir: Unbabel/TowerInstruct-7B-v0.1
+      n_gpus: 1
+      max_tokens: 1024
+      run_async: True
+      batch_size: -1
+      stop_sequences: ["</s>"]
