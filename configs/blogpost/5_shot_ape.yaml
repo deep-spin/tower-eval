@@ -30,6 +30,38 @@ tasks:
         batch_size: 16
       bleu:
 models:
+  - name: TowerBase-7B-v0.1
+    type: vllm
+    arguments:
+      model_dir: Unbabel/TowerBase-7B-v0.1
+      n_gpus: 1
+      max_tokens: 1024
+      run_async: True
+      batch_size: -1
+  - name: llama2-7b-hf
+    type: vllm
+    arguments:
+      model_dir: meta-llama/Llama-2-7b-hf
+      n_gpus: 1
+      max_tokens: 1024
+      run_async: True
+      batch_size: -1
+  - name: llama2-13b-hf
+    type: vllm
+    arguments:
+      model_dir: meta-llama/Llama-2-13b-hf
+      n_gpus: 1
+      max_tokens: 1024
+      run_async: True
+      batch_size: -1
+  - name: llama2-70b-hf
+    type: vllm
+    arguments:
+      model_dir: meta-llama/Llama-2-70b-hf
+      n_gpus: 2
+      max_tokens: 1024
+      run_async: True
+      batch_size: -1
   - name: mixtral-8x7B-v0.1
     type: vllm
     arguments:

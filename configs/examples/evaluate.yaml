@@ -1,0 +1,23 @@
+data_dir: "TowerEval-Data-v0.1/data/raw_data"
+output_dir: "TowerEval-Data-v0.1/evaluations/5_shot"
+tasks: 
+  - name: mt
+    subtasks:
+      flores.en-pt:
+      flores.en-zh:
+        metrics:
+          chrf:
+          bleu:
+            tokenizer: zh
+          comet:
+            batch_size: 16
+    metrics:
+      chrf:
+      bleu:
+      comet:
+        batch_size: 16
+models:
+  - name: TowerInstruct-7B-v0.1
+    type: vllm
+  - name: TowerBase-7B-v0.1
+    type: vllm

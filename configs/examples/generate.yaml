@@ -1,0 +1,25 @@
+data_dir: "TowerEval-Data-v0.1/data/instructions_data/5_shot"
+output_dir: "TowerEval-Data-v0.1/generations/5_shot"
+tasks: 
+  - name: mt
+    subtasks:
+      flores.en-pt:
+      flores.en-zh:
+models:
+  - name: TowerInstruct-7B-v0.1
+    type: vllm
+    arguments:
+      model_dir: Unbabel/TowerInstruct-7B-v0.1
+      n_gpus: 1
+      max_tokens: 1024
+      run_async: True
+      batch_size: -1
+      stop_sequences: ["</s>"]
+  - name: TowerBase-7B-v0.1
+    type: vllm
+    arguments:
+      model_dir: Unbabel/TowerBase-7B-v0.1
+      n_gpus: 1
+      max_tokens: 1024
+      run_async: True
+      batch_size: -1
