@@ -2,7 +2,12 @@ import os
 from abc import ABC, abstractmethod
 
 from loguru import logger
-from tower_eval.utils import get_num_processed_lines, log_response, read_lines, write_lines
+from tower_eval.utils import (
+    get_num_processed_lines,
+    log_response,
+    read_lines,
+    write_lines,
+)
 from tqdm import tqdm
 
 
@@ -30,10 +35,6 @@ class Generator(ABC):
         """ """
         pass
 
-    @abstractmethod
-    def _kill_model(self):
-        """ """
-        pass
     @staticmethod
     @abstractmethod
     def model_name() -> None:

@@ -4,4 +4,5 @@ __pycache__
 .vscode
 wandb
 TowerEval-Data-v0.1*
-tower-eval-env.10
+tower-eval-env*
+local_configs*

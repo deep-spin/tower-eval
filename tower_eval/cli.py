@@ -12,12 +12,15 @@ import argparse
 import json
 import os
 import random
+import subprocess
 import sys
+import time
 from collections import defaultdict
 from copy import deepcopy
 from pathlib import Path
 
 import numpy as np
+import psutil
 import wandb
 from loguru import logger
 from tower_eval.metrics import available_metrics
@@ -248,58 +251,36 @@ def run_index(config: dict) -> None:
             )
 
 
-def run_generations(configs: dict) -> dict:
+def run_generations(configs: dict, config_path: str, config_type: str) -> dict:
     logger.remove()
     logger.add(
         sys.stderr,
         colorize=True,
         format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {message}",
     )
-    data_dir = Path(configs.get("data_dir"))
-    output_dir = Path(configs.get("output_dir"))
-    tasks = configs.get("tasks")
     models = configs.get("models")
-    for model in models:
-        model_name = model.get("name")
-        model_type = model.get("type")
+    for i, model in enumerate(models):
         model_args = model.get("arguments")
         model_args = {} if not model_args else model_args
-        model = available_models[model_type](**(model_args))
-        for task in tasks:
-            task_name = task.get("name")
-            subtasks = task.get("subtasks")
-            for subtask, _ in subtasks.items():
-                input_file = data_dir / task_name / subtask / "instructions.txt"
-                output_file = (
-                    output_dir
-                    / task_name
-                    / subtask
-                    / model_type
-                    / model_name
-                    / "generation.txt"
-                )
-                logger.opt(colors=True).info(
-                    f"Running inference for task: <yellow> {task_name} </yellow>, subtask: <green> {subtask} </green> with model: <red> {model_type}/{model_name} </red> saving to: <red> {output_dir} </red>"
-                )
-                make_dir_if_not_exists(output_file)
-                # seq2seq models and external vendors require language pair information
-                if model_type == "seq2seq" or model_type == "externalvendor":
-                    src_lang, tgt_lang = subtask.split(".")[-1].split("-")
-                    model.source_language = src_lang
-                    model.target_language = tgt_lang
-                model.generation_with_resume(
-                    input_file=input_file, output_file=output_file
-                )
-                # save run metadata to the same path for better experiment tracking
-                save_to_json(
-                    save_location=Path(output_file).parent / "metadata.json",
-                    data=configs,
-                )
+        current_dir = os.getcwd()
         try:
-            model.server.close_server()
-        # in case model does not have a close server attribute (e.g., openAI)
-        except AttributeError:
-            pass
+            process = subprocess.Popen(
+                [
+                    f"python",
+                    f"{current_dir}/tower_eval/tasks/generate.py",
+                    "--i",
+                    f"{str(i)}",
+                    "--config_path",
+                    f"{config_path}",
+                    "--config_type",
+                    f"{config_type}",
+                ]
+            )
+            while process.poll() is None:
+                time.sleep(1)
+            logger.info("Generation process has finished.")
+        except KeyboardInterrupt:
+            process.terminate()
 
 
 def command_selector(args):
@@ -341,7 +322,7 @@ def command_selector(args):
     elif args.command == "generate":
         if args.config:
             config_args = parse_yaml_config(args.config)
-            run_generations(config_args)
+            run_generations(config_args, args.config, config_type="generate")
         else:
             output_file = os.path.join(
                 args.output_dir,
@@ -392,7 +373,7 @@ def command_selector(args):
                     model_dict["hypothesis_dir"] = config_args["gen_output_dir"]
                 configs[step]["models"].append(model_dict)
         wandb_project_name = args.wandb_project_name
-        run_generations(configs["gen"])
+        run_generations(configs["gen"], args.config, config_type="gen-eval")
         run_evaluations(configs["eval"], wandb_project_name=wandb_project_name)
     else:
         print(f"ERROR: {args['command']} is not supported, yet.")

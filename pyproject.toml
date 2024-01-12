@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "tower-eval"
 version = "0.1.0"
-description = "Provides evaluation metrics for the Tower tasks"
+description = "LLM generation and evaluation repository for MT and related tasks (e.g., APE, NER, GEC)."
 authors = [
     "Amin Farajian <amin@unbabel.com>",
     "José Pombal <jose.pombal@unbabel.com>"

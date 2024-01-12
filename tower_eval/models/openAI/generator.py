@@ -5,11 +5,10 @@ from typing import List, Union
 import openai
 from loguru import logger
 from openai.util import ApiType
-from tqdm import tqdm
-
 from tower_eval.models.exceptions import GenerationException
 from tower_eval.models.inference_handler import Generator
 from tower_eval.utils import generate_with_retries, read_lines
+from tqdm import tqdm
 
 
 class OpenAI(Generator):

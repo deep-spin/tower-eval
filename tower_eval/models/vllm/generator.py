@@ -19,7 +19,6 @@ class VLLM(Generator):
         do_sample: bool = False,
         seed: int = 42,
         n_gpus: int = 1,
-        retries: int = 10,
         run_async: bool = True,
         batch_size: int = 16,
         quantization: str = None,  # "awq", "gptq" or "squeezellm"
@@ -35,7 +34,6 @@ class VLLM(Generator):
         )
         self.seed = seed
         self.model_dir = kwargs.get("model_dir")
-        self.retries = retries
         self.run_async = run_async
         self.batch_size = batch_size
         self.quantization = quantization
