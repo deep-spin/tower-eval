@@ -37,7 +37,7 @@ huggingface-cli download Unbabel/TowerEval-Data-v0.1 --repo-type dataset --local
 tar -xzf TowerEval-Data-v0.1/data.tar.gz -C TowerEval-Data-v0.1/
 ```
 
-To replicate the results in the [blogpost](link_blogpost) about [Tower](link_tower_hf), run:
+To replicate the results in the [blogpost](https://unbabel.com/announcing-tower-an-open-multilingual-llm-for-translation-related-tasks/) about [Tower](https://huggingface.co/collections/Unbabel/tower-7b-v01-659eaedfe36e6dd29eb1805c), run:
 
 ```sh
 bash run_blogpost_benchmark.sh
