@@ -30,7 +30,7 @@ pip install vllm
 
 ## Replicating our benchmarks
 
-First, download the test data:
+First, download the test data from our huggingface repository, [TowerEval-Data](https://huggingface.co/datasets/Unbabel/TowerEval-Data-v0.1):
 
 ```sh
 huggingface-cli download Unbabel/TowerEval-Data-v0.1 --repo-type dataset --local-dir TowerEval-Data-v0.1
@@ -66,7 +66,7 @@ More details on general usage in the next section.
 
 ## Usage Guide
 
-### Download the test sets
+### Download the test sets from [TowerEval-Data](https://huggingface.co/datasets/Unbabel/TowerEval-Data-v0.1)
 
 Run:
 
