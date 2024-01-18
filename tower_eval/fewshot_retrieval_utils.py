@@ -129,7 +129,7 @@ def get_positive_negative_examples_from_task(examples: list[dict[str, str]], tas
     # each "e" is an example inside examples, which corresponds to a row in the raw data's dataframe
     positive_label_condition: Callable[[dict[str, str]], bool] = None
     if task in ["ape"]:
-        positive_label_condition = lambda e: e["mt"] == e["pe"]
+        positive_label_condition = lambda e: e["mt"] == e["ref"]
     elif task in ["paraphrase_identification", "word_sense_disambiguation"]:
         positive_label_condition = lambda e: e["answer"] == "Yes"
     elif task in ["gec"]:

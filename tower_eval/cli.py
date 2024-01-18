@@ -191,7 +191,7 @@ def run_data_preparation(config: dict) -> None:
             prompt_data_path = (
                 f"{data_dir}/{task_name}/{subtask_name}/{test_data_filename}"
             )
-            if task.get("n_fewshots") is not None:
+            if task.get("n_fewshots", 0) > 0:
                 index_path = f"{data_dir}/{task_name}/{subtask_name}/index"
                 fewshot_data_path = (
                     f"{data_dir}/{task_name}/{subtask_name}/{fewshot_data_filename}"
