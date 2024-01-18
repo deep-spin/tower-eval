@@ -1,0 +1,131 @@
+seed: 52
+data_dir: "TowerEval-Data-v0.1/data/raw_data"
+output_dir: "TowerEval-Data-v0.1/data/test_instructions"
+tasks:
+  - name: ner
+    prompt_templates:
+      - "<|im_start|>user\\nHighlight all the named entities in the following list of tokens \"{{ input }}\".\\nThese are the annotation guidelines for named entities you need to follow:\\n{% for annotation in annotations -%}- {{ annotation.tag }} - {{ annotation.description }}{% if not loop.last %}\\n{% endif %}{%- endfor %}.\\nBesides that, prepend B- as a prefix of the first token of any entity and I- to subsequent ones if they exist. If a token is not a part of a named entity, mark it as O.\\nAnswer: <|im_end|>\\n<|im_start|>assistant\\n"
+    n_fewshots: 0
+    subtasks:
+      multiconer2023.en:
+        prompt_args:
+          annotations:
+            - tag: Person
+              description: Names of people
+            - tag: Location
+              description: Location or physical facilities
+            - tag: Group
+              description: Groups of people, organizations, corporations or other entities
+            - tag: Product
+              description: Consumer products such as food, drinks, clothing, and vehicles
+            - tag: CreativeWorks
+              description: Titles of creative works like movie, song, and book titles
+            - tag: Medical
+              description: Entities from the medical domain, including diseases, symptoms, and medications
+      multiconer2023.de:
+        prompt_args:
+          annotations:
+            - tag: Person
+              description: Names of people
+            - tag: Location
+              description: Location or physical facilities
+            - tag: Group
+              description: Groups of people, organizations, corporations or other entities
+            - tag: Product
+              description: Consumer products such as food, drinks, clothing, and vehicles
+            - tag: CreativeWorks
+              description: Titles of creative works like movie, song, and book titles
+            - tag: Medical
+              description: Entities from the medical domain, including diseases, symptoms, and medications
+      multiconer2023.fr:
+        prompt_args:
+          annotations:
+            - tag: Person
+              description: Names of people
+            - tag: Location
+              description: Location or physical facilities
+            - tag: Group
+              description: Groups of people, organizations, corporations or other entities
+            - tag: Product
+              description: Consumer products such as food, drinks, clothing, and vehicles
+            - tag: CreativeWorks
+              description: Titles of creative works like movie, song, and book titles
+            - tag: Medical
+              description: Entities from the medical domain, including diseases, symptoms, and medications
+      multiconer2023.es:
+        prompt_args:
+          annotations:
+            - tag: Person
+              description: Names of people
+            - tag: Location
+              description: Location or physical facilities
+            - tag: Group
+              description: Groups of people, organizations, corporations or other entities
+            - tag: Product
+              description: Consumer products such as food, drinks, clothing, and vehicles
+            - tag: CreativeWorks
+              description: Titles of creative works like movie, song, and book titles
+            - tag: Medical
+              description: Entities from the medical domain, including diseases, symptoms, and medications
+      multiconer2023.it:
+        prompt_args:
+          annotations:
+            - tag: Person
+              description: Names of people
+            - tag: Location
+              description: Location or physical facilities
+            - tag: Group
+              description: Groups of people, organizations, corporations or other entities
+            - tag: Product
+              description: Consumer products such as food, drinks, clothing, and vehicles
+            - tag: CreativeWorks
+              description: Titles of creative works like movie, song, and book titles
+            - tag: Medical
+              description: Entities from the medical domain, including diseases, symptoms, and medications
+      multiconer2023.pt:
+        prompt_args:
+          annotations:
+            - tag: Person
+              description: Names of people
+            - tag: Location
+              description: Location or physical facilities
+            - tag: Group
+              description: Groups of people, organizations, corporations or other entities
+            - tag: Product
+              description: Consumer products such as food, drinks, clothing, and vehicles
+            - tag: CreativeWorks
+              description: Titles of creative works like movie, song, and book titles
+            - tag: Medical
+              description: Entities from the medical domain, including diseases, symptoms, and medications
+      multiconer2023.zh:
+        prompt_args:
+          annotations:
+            - tag: Person
+              description: Names of people
+            - tag: Location
+              description: Location or physical facilities
+            - tag: Group
+              description: Groups of people, organizations, corporations or other entities
+            - tag: Product
+              description: Consumer products such as food, drinks, clothing, and vehicles
+            - tag: CreativeWorks
+              description: Titles of creative works like movie, song, and book titles
+            - tag: Medical
+              description: Entities from the medical domain, including diseases, symptoms, and medications
+  - name: gec
+    prompt_templates:
+      - "<|im_start|>user\\n{%- if examples | length > 1 -%} Here are some examples of {{ lang }} texts with errors and their corrections.{%- else -%} Here is an example of a {{ lang }} text with errors and its correction.\\n{%- endif -%}{%- for example in examples -%}Source: {{ example.src }}\\nCorrected: {{ example.ref }}\\n\\n{%- endfor -%}Correct the errors in the following {{ lang }} text.\\nSource: {{ src }}\\nCorrected: <|im_end|>\\n<|im_start|>assistant\\n"
+    n_fewshots: 5
+    fewshot_retrieval_method: force_label_balance
+    fewshot_retrieval_args:
+      n_positive: 2
+    subtasks:
+      conll14.en:
+        prompt_args:
+          lang: English
+      fm.de:
+        prompt_args:
+          lang: German
+      cowsl2h.es:
+        prompt_args:
+          lang: Spanish

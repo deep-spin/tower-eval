@@ -1,6 +1,17 @@
 # tower-eval
 Repository for evaluation of LLMs on MT and related tasks. `tower-eval` also supports generation with [`vllm`](https://github.com/vllm-project/vllm) and the creation of custom test suites and instructions. 
 
+## Contents
+
+- [Installation](#installation)
+- [Replicating our benchmarks](#replicating-our-benchmarks)
+- [Usage Guide](#usage-guide)
+  - [Generation](#run-inference)
+  - [Evaluation](#evaluate-outputs)
+  - [Generation followed by Evaluation](#run-inference-and-evaluation-consecutively)
+  - [Prepare your own test instructions](#preparing-your-own-test-instructions)
+
+
 ## Installation
 
 To install the package first clone the project by:
@@ -99,6 +110,7 @@ TowerEval-Data-v0.1
 ```
 
 
+<a name="Generation"></a>
 ### Run inference
 
 Once you have the data ready you can use tower-eval to run inference using the `generate` command:
@@ -194,6 +206,7 @@ Currently available metrics are:
 For more details on the metrics and their respective arguments check [Metrics section](#MetricsSection).
 
 An example config can be found in `configs/examples/evaluate.yaml`.
+
 
 ### Run inference and evaluation consecutively
 
@@ -317,3 +330,126 @@ The arguments that can be passed to F1-SEQUENCE are:
 - `tokenize_hypothesis`: Whether you want to tokenize the hypothesis or not, default: `True`
 - `default_noent_tag`: the tag to use for the no-entity tags. This is mainly used for the NER task. default: `O`
 - `valid_ner_tags`: The list of valid tags for the task. If a token has a tag not listed here, it will be automatically mapped to the `default_noent_tag`.
+
+
+### Preparing your own test instructions
+
+`tower-eval` also allows you to convert raw data in a ``jsonl`` format into instructions that can be used for generation.
+The command is called `prepare`, and works in a similar way to the others:
+
+```bash
+python -m tower_eval.cli prepare --config <ABSOLUTE_PATH_TO_CONFIG>
+```
+First, you **must** have the raw data — a `test.jsonl` file — under the following folder structure:
+
+```
+parent_folder
+    task_1
+        subtask_1
+            test.jsonl
+            dev.jsonl
+        subtask_2
+            ...
+```
+
+`test.jsonl` must contain keys with the information you will need in the prompts. For example, machine translation data contains source and reference keys (src, ref). `dev.jsonl` is required if you want to create few-shot data. **The files must have these names**.
+
+The output of the command will be:
+
+```
+output_dir
+    task_1
+        subtask_1
+            instructions.txt
+        subtask_2
+            ...
+```
+
+The config file must have the following structure:
+
+```yaml
+seed: <SEED>
+data_dir: <RAW_DATA_DIR>
+output_dir: <OUTPUT_DIR>
+tasks:
+  - name: task_1
+    prompt_templates:
+      - "<template_1>"
+      - "<template_2>"
+      ...
+    n_fewshots: 0
+    fewshot_retrieval_method: random
+    fewshot_retrieval_args:
+      f_arg_1: <F_ARG_1>
+    subtasks:
+      subtask_1:
+        prompt_args:
+          arg_1: <ARG_1>
+          arg_2: <ARG_2>
+  - name: task_2
+    ...
+```
+
+- `seed` controls the random state of any sampling operation (e.g., random few-shot sampling, or sampling multiple prompt templates).
+- `data_dir` is the path to the `parent_folder` of the raw data (its children should have the aforementioned folder structure).
+- `output_dir` is the parent folder of where the data will be saved; the folder structure will be the same as the raw data, except the final file will be called `instructions.txt`.
+- task and subtask logic is the same as previous commands.
+- `prompt_templates` will be the templates used when creating instructions. If more than one is passed, they are randomly sampled uniformly. More details on the next [subsection](#creating-prompt-templates).
+- `n_fewshots` is the number of few-shots the prompt should contain. If this is larger than 0, a `dev.jsonl` must exist, and the next two arguments will be considered.
+- `fewshot_retrieval_method` controls how the fewshots are reetrieved for each data instance. Defaults to `random`, which corresponds to random sampling with replacement from `dev.jsonl`. There's a [section](#fewshot-retrieval-methods) on the other options.
+- `fewshot_retrieval_args` are arguments for the retrieval methods.
+
+
+#### Creating prompt templates
+
+We use [jinja2](https://pypi.org/project/Jinja2/) for templating. For example, if your `test.jsonl` file has the following rows:
+
+```json
+{"col_1": "Hello", "col_2": "World"}
+{"col_1": "Goodbye", "col_2": "Earth"}
+```
+
+And your template is:
+
+```
+"Please say {{ col_1 }} {{ col_2 }}."
+```
+
+The resulting instructions will be:
+
+```
+Please say Hello World.
+Please say Goodbye Earth.
+```
+
+If you want extra arguments to be constant across all instances, and that are not present in the raw data, you can pass in the config:
+
+```yaml
+...
+      fewshot_retrieval_args:
+        arg_1: "politely"
+```
+
+Then, if the template is:
+
+```
+"Please say {{ col_1 }} {{ col_2 }} {{ arg_1 }}."
+```
+
+The output will be:
+
+```
+Please say Hello World politely.
+Please say Goodbye Earth politely.
+```
+
+jinja2 allows for more complex logic, like for loops (which is what we use when there are several few-shot examples), if-else conditions, etc.... Please refer to their documentation for more details.
+
+Our example preapre config (`configs/examples/prepare.yaml`) contains an example to recreate the 0-shot NER data and 5-shot GEC data for TowerInstruct.
+
+#### Fewshot retrieval methods
+
+- `random`: few-shots will be retrieved randomly from the `dev.jsonl` pool.
+- `ordered`: few-shots will be retrieved in an ordered fashion from the `dev.jsonl` pool. For exampe, if `n_fewshots` is 2, the first test instance will have the first two dev instances as fewshots, the second will have the third and forth, and so on. If dev is shorter than test, we loop back to the beginning.
+- `force_label_balance` can be used for tasks with name `ape` and `gec`. Will force `n_positive` exampes in the prompt that do not require correction.
+- `similarity` can be used for MT. Requires an index (docs are WIP). Retrieves the examples whose source is most similar with the test instance's source.
