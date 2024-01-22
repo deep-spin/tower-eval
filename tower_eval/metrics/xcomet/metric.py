@@ -67,4 +67,4 @@ class XCOMET(Metric):
 
     @staticmethod
     def metric_name():
-        return "comet"
+        return "xcomet"
