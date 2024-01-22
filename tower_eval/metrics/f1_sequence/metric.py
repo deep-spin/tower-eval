@@ -158,7 +158,9 @@ class F1SEQUENCE(Metric):
         elif format == "jsonl":
             gold_data = load_jsonl_file(filename)
             gold_data = list_to_dict(gold_data)
-            labels = [self.list_of_tuples_to_tokens(line) for line in gold_data["answer"]]
+            labels = [
+                self.list_of_tuples_to_tokens(line) for line in gold_data["answer"]
+            ]
         return labels
 
     def list_of_tuples_to_tokens(self, line):

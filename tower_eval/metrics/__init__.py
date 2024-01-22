@@ -1,5 +1,6 @@
 from tower_eval.metrics.accuracy.metric import ACCURACY
 from tower_eval.metrics.bleu.metric import BLEU
+from tower_eval.metrics.bleurt.metric import BLEURT
 from tower_eval.metrics.chrf.metric import CHRF
 from tower_eval.metrics.comet.metric import COMET
 from tower_eval.metrics.comet_kiwi.metric import COMETKiwi
@@ -8,7 +9,9 @@ from tower_eval.metrics.error_span_detection_f1.metric import ErrorSpanDetection
 from tower_eval.metrics.error_span_detection_precision.metric import (
     ErrorSpanDetectionPrecision,
 )
-from tower_eval.metrics.error_span_detection_recall.metric import ErrorSpanDetectionRecall
+from tower_eval.metrics.error_span_detection_recall.metric import (
+    ErrorSpanDetectionRecall,
+)
 from tower_eval.metrics.f1.metric import F1
 from tower_eval.metrics.f1_sequence.metric import F1SEQUENCE
 from tower_eval.metrics.pearson.metric import PEARSON
@@ -22,6 +25,7 @@ __all__ = [
     BLEU,
     COMET,
     COMETKiwi,
+    BLEURT,
     CHRF,
     ERRANT,
     F1,
