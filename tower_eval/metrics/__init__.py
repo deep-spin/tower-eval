@@ -24,6 +24,7 @@ from tower_eval.metrics.xcomet.metric import XCOMET
 __all__ = [
     TER,
     BLEU,
+    XCOMET,
     COMET,
     COMETKiwi,
     BLEURT,
