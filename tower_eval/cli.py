@@ -373,7 +373,7 @@ def command_selector(args):
                     model_dict["hypothesis_dir"] = config_args["gen_output_dir"]
                 configs[step]["models"].append(model_dict)
         wandb_project_name = args.wandb_project_name
-        # run_generations(configs["gen"], args.config, config_type="gen-eval")
+        run_generations(configs["gen"], args.config, config_type="gen-eval")
         run_evaluations(configs["eval"], wandb_project_name=wandb_project_name)
     else:
         print(f"ERROR: {args['command']} is not supported, yet.")
