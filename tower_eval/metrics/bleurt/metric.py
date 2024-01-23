@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 import torch
-from evaluate import load
+from bleurt_pytorch import (
+    BleurtConfig,
+    BleurtForSequenceClassification,
+    BleurtTokenizer,
+)
 from tower_eval.metrics.bleurt.result import BLEURTResult
 from tower_eval.metrics.metrics_handler import Metric
 from tower_eval.metrics.result_handler import MetricResult
@@ -11,7 +15,13 @@ class BLEURT(Metric):
     def __init__(self, batch_size: int = 16, **kwargs) -> None:
         super().__init__(**kwargs)
         self.batch_size = kwargs.get("batch_size", batch_size)
-        self.model = load("bleurt", "BLEURT-20", module_type="metric")
+        self.config = BleurtConfig.from_pretrained("lucadiliello/BLEURT-20")
+        self.model = BleurtForSequenceClassification.from_pretrained(
+            "lucadiliello/BLEURT-20"
+        )
+        self.tokenizer = BleurtTokenizer.from_pretrained("lucadiliello/BLEURT-20")
+        self.model.eval()
+        self.model = self.model.to("cuda")
 
     def run(self) -> dict:
         hypotheses, gold_data = self._handle_inputs(
@@ -35,11 +45,14 @@ class BLEURT(Metric):
             with torch.no_grad():
                 batch_references = references[i : i + self.batch_size]
                 batch_hypotheses = hypotheses[i : i + self.batch_size]
-                segments_scores.extend(
-                    self.model.compute(
-                        predictions=batch_hypotheses, references=batch_references
-                    )["scores"]
-                )
+                inputs = self.tokenizer(
+                    batch_references,
+                    batch_hypotheses,
+                    padding="longest",
+                    return_tensors="pt",
+                    truncation=True,
+                ).to("cuda")
+                segments_scores.extend(self.model(**inputs).logits.flatten().tolist())
         system_score = sum(segments_scores) / len(segments_scores)
 
         result = BLEURTResult(
