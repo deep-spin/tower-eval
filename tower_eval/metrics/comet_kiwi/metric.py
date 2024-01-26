@@ -56,7 +56,12 @@ class COMETKiwi(Metric):
         )
         system_score, segments_scores = outputs.system_score, outputs.scores
 
-        comet_result = COMETKiwiResult(system_score)
+        comet_result = COMETKiwiResult(
+            {
+                "system_score": system_score,
+                "segments_scores": segments_scores,
+            }
+        )
         return comet_result
 
     def process_result(self, result) -> MetricResult:
