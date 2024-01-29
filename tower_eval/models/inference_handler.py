@@ -18,6 +18,7 @@ class Generator(ABC):
         self.server = None
         self.run_async = True
         self.batch_size = 16
+        self.strip = kwargs.get("strip", True)
 
     def generate(self, prompt: str, **kwargs):
         """
@@ -62,7 +63,10 @@ class Generator(ABC):
         ), f"MORE PROCESSED LINES ({num_processed_lines}) THAN INPUT LINES ({total_lines})!"
         # Skip the lines already processed
         input_lines = input_lines[num_processed_lines:]
-        input_lines = [input_line.strip() for input_line in input_lines]
+        if self.strip:
+            input_lines = [input_line.strip() for input_line in input_lines]
+        else:
+            input_lines = [input_line for input_line in input_lines]
         inference_batch_size = self.batch_size
         if self.run_async:
             # special batch_size case for vllm to pass all strings at once and let the model handle it

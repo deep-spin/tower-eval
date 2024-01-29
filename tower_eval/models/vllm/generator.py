@@ -27,7 +27,10 @@ class VLLM(Generator):
     ) -> None:
         super().__init__(**kwargs)
         self.max_tokens = max_tokens  # actually max new tokens
-        self.stop_sequences = stop_sequences
+        if len(stop_sequences) == 0:
+            self.stop_sequences = None
+        else:
+            self.stop_sequences = stop_sequences
         self.do_sample = do_sample
         self.temperature = vllm_sampling_params.get(
             "temperature", 1.0 if do_sample else 0
