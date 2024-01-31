@@ -190,7 +190,7 @@ def combine_metrics_args(task_metric: dict, subtask_metric: dict) -> dict:
 
 def generate_with_retries(
     retry_function,
-    openai_args,
+    model_args,
     retry_max_attempts=1,
     retry_multiplier=1,
     retry_max_interval=10,
@@ -203,7 +203,7 @@ def generate_with_retries(
         ),
         reraise=True,
     )
-    return retryer(retry_function, **openai_args)
+    return retryer(retry_function, **model_args)
 
 
 def sample_strings_from_list(strings: list[str], num_samples: int) -> list[str]:

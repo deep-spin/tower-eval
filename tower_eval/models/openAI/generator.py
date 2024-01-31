@@ -92,7 +92,7 @@ class OpenAI(Generator):
             prompt = {"messages": [{"role": "user", "content": input_line.strip()}]}
             response = generate_with_retries(
                 retry_function=openai.ChatCompletion.create,
-                openai_args=self.openai_args | prompt,
+                model_args=self.openai_args | prompt,
                 retry_max_attempts=self.retry_max_attempts,
                 retry_multiplier=self.retry_multiplier,
                 retry_min_interval=self.retry_min_interval,
