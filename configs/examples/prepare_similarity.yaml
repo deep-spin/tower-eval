@@ -1,0 +1,20 @@
+seed: 52
+data_dir: "TowerEval-Data-v0.1/data/raw_data/"
+index_dir: "TowerEval-Data-v0.1/data/indexed_data/"
+output_dir: "TowerEval-Data-v0.1/data/instructions_data/5_shot_tower_instruct_prompt_similarity/"
+tasks:
+  - name: mt
+    prompt_templates:
+      - "<|im_start|>user\n{%- for example in examples -%}{{ lp0 }}: {{ example.src }}\\n{{ lp1 }}: {{ example.ref }}\\n{%- endfor -%}{{ lp0 }}: {{ src }}\\n{{ lp1 }}: <|im_end|>\\n<|im_start|>assistant\\n"
+    jsonl: True
+    n_fewshots: 5
+    fewshot_retrieval_method: similarity
+    subtasks:
+      flores.en-pt:
+        prompt_args:
+          lp0: English
+          lp1: Portuguese
+      flores.en-zh:
+        prompt_args:
+          lp0: English
+          lp1: Chinese (simplified)

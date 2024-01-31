@@ -1,0 +1,9 @@
+seed: 52
+data_dir: "TowerEval-Data-v0.1/data/raw_data/"
+output_dir: "TowerEval-Data-v0.1/data/indexed_data/"
+tasks:
+  - name: mt
+    jsonl: True
+    subtasks:
+      flores.en-pt:
+      flores.en-zh:

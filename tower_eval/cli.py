@@ -20,9 +20,8 @@ from copy import deepcopy
 from pathlib import Path
 
 import numpy as np
-import psutil
-import wandb
 from loguru import logger
+
 from tower_eval.metrics import available_metrics
 from tower_eval.metrics.comet import DEFAULT_COMET_MODEL
 from tower_eval.models import available_models
@@ -163,6 +162,7 @@ def run_data_preparation(config: dict) -> None:
     output_dir_root = Path(config.get("output_dir"))
     output_dir_root.mkdir(parents=True, exist_ok=True)
     data_dir = config.get("data_dir", "")
+    indexed_data_dir = config.get("index_dir")
     # set random seed for later sampling
     seed = config.get("seed", 42)
     for task in config.get("tasks"):
@@ -188,34 +188,41 @@ def run_data_preparation(config: dict) -> None:
             # get data paths; we assume a specific directory structure
             test_data_filename = "test.jsonl"
             fewshot_data_filename = "dev.jsonl"
-            prompt_data_path = (
+            test_data_path = (
                 f"{data_dir}/{task_name}/{subtask_name}/{test_data_filename}"
             )
+            datastore_index_path = None
+            datastore_data_path = None
             if task.get("n_fewshots", 0) > 0:
-                index_path = f"{data_dir}/{task_name}/{subtask_name}/index"
-                fewshot_data_path = (
+                if fewshot_retrieval_method == "similarity":
+                    # We have a index path were we store the indexed data. Additionally, we do have the data_path in which
+                    # we store the (src, ref) pairs that will be used to retrieve the similar samples based on the indecies obtained from the index file
+                    datastore_index_path = (
+                        f"{indexed_data_dir}/{task_name}/{subtask_name}"
+                    )
+                datastore_data_path = (
                     f"{data_dir}/{task_name}/{subtask_name}/{fewshot_data_filename}"
                 )
-                # overwrite fewshot data path name if specific path is passed (e.g., we wish to use a different dataset)
-                fewshot_data_path = subtask_args.get(
-                    "fewshot_data_path", fewshot_data_path
+                # overwrite datastore path name if specific path is passed (e.g., we wish to use a different dataset)
+                datastore_data_path = subtask_args.get(
+                    "datastore_data_path", datastore_data_path
                 )
                 # overwrite indexed data path name if specific path is passed (e.g., we wish to use a different dataset)
-                index_path = subtask_args.get("index_path", index_path)
-            else:
-                fewshot_data_path = None
-                index_path = None
+                datastore_index_path = subtask_args.get(
+                    "index_dir", datastore_index_path
+                )
+
             prepare_data(
                 prompt_templates=prompt_templates,
                 prompt_args=prompt_args,
-                prompt_data_path=prompt_data_path,
-                fewshot_data_path=fewshot_data_path,
+                test_data_path=test_data_path,
+                datastore_data_path=datastore_data_path,
                 n_fewshots=n_fewshots,
                 fewshot_retrieval_method=fewshot_retrieval_method,
                 fewshot_retrieval_args=fewshot_retrieval_args,
                 task_name=task_name,
                 subtask_name=subtask_name,
-                index_path=index_path,
+                datastore_index_path=datastore_index_path,
                 output_dir=output_dir_root,
             )
 
@@ -238,16 +245,17 @@ def run_index(config: dict) -> None:
         for subtask_name, subtask_args in subtasks.items():
             subtask_args = {} if subtask_args is None else subtask_args
             # get data paths; we assume a specific directory structure, like for generate and evaluate commands
-            datastore_filename = "dev.json"
+            datastore_filename = "dev.jsonl"
             datastore_path = (
                 f"{data_dir}/{task_name}/{subtask_name}/{datastore_filename}"
             )
-            datastore_indexed_path = f"{data_dir}/{task_name}/{subtask_name}"
+            datastore_indexed_path = f"{output_dir_root}/{task_name}/{subtask_name}"
             index_data(
                 datastore_filename=datastore_path,
                 datastore_indexed_path=datastore_indexed_path,
                 task_name=task_name,
                 subtask_name=subtask_name,
+                jsonl=jsonl,
             )
 
 
