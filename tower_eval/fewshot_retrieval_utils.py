@@ -3,9 +3,9 @@ from typing import Callable
 
 import faiss
 import numpy as np
-import pandas as pd
 import torch
 from sentence_transformers import SentenceTransformer
+
 from tower_eval.utils import load_data_to_records
 
 
@@ -168,12 +168,12 @@ def get_fewshot_retrieval_method(method: str) -> Callable:
 
 def load_few_shot_data(
     test_set: list[dict[str, str]],
-    fewshot_data_path: str,
+    datastore_data_path: str,
     n_fewshots: int,
     total_shots: int,
     fewshot_retrieval_method: str,
     task: str,
-    index_path: str = None,
+    datastore_index_path: str = None,
     fewshot_retrieval_args: dict = {},
 ) -> list[list[dict[str, str]]]:
     """
@@ -181,14 +181,14 @@ def load_few_shot_data(
     pertaining to a single data instance.
     """
     # raw data file must be a jsonl
-    fewshot_data = load_data_to_records(fewshot_data_path)
+    datastore_data = load_data_to_records(datastore_data_path)
     # choose method of fewshot retrieval
     _fewshot_retrieval_func = get_fewshot_retrieval_method(fewshot_retrieval_method)
     fewshot_retrieval_args["task"] = task
-    fewshot_retrieval_args["index_path"] = index_path
+    fewshot_retrieval_args["index_path"] = datastore_index_path
     fewshot_examples_list = _fewshot_retrieval_func(
         test_set=test_set,
-        examples=fewshot_data,
+        examples=datastore_data,
         n_shots=n_fewshots,
         total_examples=total_shots,
         **fewshot_retrieval_args,
