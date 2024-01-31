@@ -140,6 +140,9 @@ def run_evaluations(configs: dict, wandb_project_name: str = None) -> dict:
                             model=model_name,
                             shot_setting=shot_setting,
                         )
+                if Path(output_path).exists():
+                    existing_results = json.load(open(output_path, "r"))
+                    subtask_results.update(existing_results)
                 save_to_json(
                     save_location=output_path,
                     data=subtask_results,
