@@ -1,6 +1,6 @@
 import os
 from typing import Callable
-
+from tqdm import tqdm
 import faiss
 import numpy as np
 import torch
@@ -43,7 +43,7 @@ def ordered_retrieval(
 
 def get_similar_examples(n_examples, encoder, index, seed_sentence):
     # encode the seed sentence
-    question_embedding = encoder.encode(seed_sentence)
+    question_embedding = encoder.encode(seed_sentence, show_progress_bar=False)
 
     # search for similar examples
     dists, I = index.search(
@@ -71,7 +71,7 @@ def similarity_retrieval(
 
     selected_examples = []
     # i = 0
-    for test_setence in test_set:
+    for test_setence in tqdm(test_set):
         selected_examples_per_instance = []
         # get similar examples
         idxs, dists = get_similar_examples(n_shots, encoder, index, test_setence["src"])
