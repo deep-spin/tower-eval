@@ -1,0 +1,29 @@
+gen_data_dir: "TowerEval-Data-v0.1/data/instructions_data/0_shot"
+eval_data_dir: "TowerEval-Data-v0.1/data/raw_data"
+gen_output_dir: "TowerEval-Data-v0.1/generations/0_shot"
+eval_output_dir: "TowerEval-Data-v0.1/evaluations/0_shot"
+tasks: 
+  - name: mt
+    subtasks:
+      flores.en-de:
+      flores.en-fr:
+    metrics:
+      chrf:
+      bleu:
+      comet:
+        batch_size: 16
+models:
+  - name: gemini
+    type: vertex-ai
+    arguments:
+      model: "gemini-pro"
+      max_tokens: 1024
+      debug: True
+      retry_max_attempts: 200
+  - name: palm2
+    type: vertex-ai
+    arguments:
+      model: "text-bison"
+      max_tokens: 1024
+      debug: True
+      retry_max_attempts: 200

@@ -370,6 +370,27 @@ webencodings = "*"
 css = ["tinycss2 (>=1.1.0,<1.3)"]
 
 [[package]]
+name = "bleurt-pytorch"
+version = "0.0.1"
+description = "PyTorch porting of BLEURT"
+category = "main"
+optional = false
+python-versions = "*"
+files = []
+develop = false
+
+[package.dependencies]
+sentencepiece = ">=0.1.97"
+torch = ">=1.10"
+transformers = ">=4.25"
+
+[package.source]
+type = "git"
+url = "https://github.com/lucadiliello/bleurt-pytorch.git"
+reference = "HEAD"
+resolved_reference = "279ca1bb4106bde5a89f0f82723197e23d8446cb"
+
+[[package]]
 name = "blis"
 version = "0.7.11"
 description = "The Blis BLAS-like linear algebra library, as a self-contained C-extension."
@@ -6247,4 +6268,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9.0,<3.13"
-content-hash = "79d7d4bd3276ad4fb83637399e6b120c642cd6c10e4ce49c58e459f1102ad602"
+content-hash = "60439fbb9bac66d44e46e5916b9f6589a436b7a4b0aef2ecad10f278ca2ec4c4"

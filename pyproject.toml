@@ -41,6 +41,7 @@ mosestokenizer = "^1.2.1"
 sentence-transformers = "^2.2.2"
 faiss-cpu = "^1.7.4"
 python-dotenv = "^1.0.0"
+bleurt-pytorch = {git = "https://github.com/lucadiliello/bleurt-pytorch.git"}
 
 [tool.poetry.dev-dependencies]
 mock = ">=3.0.5,<4.0.0"
