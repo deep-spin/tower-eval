@@ -268,15 +268,16 @@ In your config file you need to define the following parameteres:
   - `batch_size`: **[vllm only]** batch size if `run_async` is True; set to -1 to let vllm handle generations most efficiently.
   - `quantization` **[vllm only]** whether to quantize the model. See vllm docs for more information.
   - `vllm_sampling_params`: **[vllm only]** vllm sampling kwargs; see vllm docs for all the arguments you can pass.
-  - `model`: **[OpenAI only]** This field is only used for the OpenAI based models and gets the following values: `gpt-3.5-turbo`, `gpt-4`.
-  - `temperature`: **[OpenAI only]** This field defines the temprature that you want to use when calling OpenAI models and controls the randomness of the generation.
-  - `top_p`: **[OpenAI only]** Defines the cumulative probability cutoff for token selection.
+  - `model`: **[OpenAI and VertexAI only]** This field is only used for the OpenAI based models and gets the following values: `gpt-3.5-turbo`, `gpt-4`.
+  - `temperature`: **[OpenAI and VertexAI only]** This field defines the temprature that you want to use when calling OpenAI models and controls the randomness of the generation.
+  - `top_p`: **[OpenAI and VertexAI only]** Defines the cumulative probability cutoff for token selection.
   - `frequency_penalty`: **[OpenAI only]** Controls the OpenAI models' likelihood to repeat the same line verbatim.
   - `presence_penalty`: **[OpenAI only]** Controls the OpenAI models' likelihood to use new words and topics.
-  - `retry_max_attempts`: **[OpenAI only]** The maximum number of retries in case there is no response from OpenAI's generation endpoint.
-  - `retry_max_interval`: **[OpenAI only]** The maximum time to wait before re-sending the request in case there is no response from OpenAI's generation endpoint.
-  - `retry_min_interval`: **[OpenAI only]** The minimum time to wait before re-sending the request in case there is no response from OpenAI's generation endpoint.
+  - `retry_max_attempts`: **[OpenAI and VertexAI only]** The maximum number of retries in case there is no response from OpenAI's generation endpoint.
+  - `retry_max_interval`: **[OpenAI and VertexAI only]** The maximum time to wait before re-sending the request in case there is no response from OpenAI's generation endpoint.
+  - `retry_min_interval`: **[OpenAI and VertexAI only]** The minimum time to wait before re-sending the request in case there is no response from OpenAI's generation endpoint.
 
+For the updated information on the supported models by VertexAI please check the [Model Information page](https://cloud.google.com/vertex-ai/docs/generative-ai/learn/models?_ga=2.42102502.-292947728.1686331955) on Google Cloud.
 
 <a name="MetricsSection"></a>
 ### Metrics

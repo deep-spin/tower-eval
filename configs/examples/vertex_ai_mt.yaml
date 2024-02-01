@@ -20,3 +20,10 @@ models:
       max_tokens: 1024
       debug: True
       retry_max_attempts: 200
+  - name: palm2
+    type: vertex-ai
+    arguments:
+      model: "text-bison"
+      max_tokens: 1024
+      debug: True
+      retry_max_attempts: 200
