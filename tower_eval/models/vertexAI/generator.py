@@ -38,13 +38,14 @@ class VertexAI(Generator):
         **kwargs
     ) -> None:
         super().__init__(**kwargs)
-
         self.run_async = run_async
         self.retry_max_attempts = retry_max_attempts
         self.retry_max_interval = retry_max_interval
         self.retry_min_interval = retry_min_interval
         self.retry_multiplier = retry_multiplier
 
+        # Gimini and PaLM models need to be called through different model APIs with some small differences.
+        # But, to avoid having two different inference endpoint in Tower-Eval we decided to handle both of them here.
         self.model_type = API_TYPE.get(model)
         if self.model_type == "gemini":
             self.model = GenerativeModel(model)
@@ -78,7 +79,6 @@ class VertexAI(Generator):
         Returns:
             str: Returns the response used.
         """
-        breakpoint()
         try:
             if self.model_type == "gemini":
                 prompt = {"contents": input_line}
