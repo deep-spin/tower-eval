@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 import os
-from typing import List, Union
+import re
 
 import openai
 from loguru import logger
+from openai.error import InvalidRequestError
 from openai.util import ApiType
 from tower_eval.models.exceptions import GenerationException
 from tower_eval.models.inference_handler import Generator
-from tower_eval.utils import generate_with_retries, read_lines
-from tqdm import tqdm
+from tower_eval.utils import generate_with_retries
 
 
 class OpenAI(Generator):
@@ -45,7 +45,7 @@ class OpenAI(Generator):
         retry_multiplier: int = 1,
         stop_sequences: list[str] = ["<|endoftext|>", "\n", "\\n"],
         run_async: bool = False,
-        **kwargs
+        **kwargs,
     ) -> None:
         super().__init__(**kwargs)
         # Set openai settings
@@ -71,6 +71,9 @@ class OpenAI(Generator):
         self.retry_max_interval = kwargs.get("retry_max_interval", retry_max_interval)
         self.retry_min_interval = kwargs.get("retry_min_interval", retry_min_interval)
         self.retry_multiplier = kwargs.get("retry_multiplier", retry_multiplier)
+        self.model_max_tokens = (
+            4097 if model == "gpt-3.5-turbo" else 8192 if model == "gpt-4" else 32000
+        )
 
         openai.api_type = api_type
         openai.api_key = os.environ.get("OPENAI_API_KEY", api_key)
@@ -99,10 +102,36 @@ class OpenAI(Generator):
                 retry_max_interval=self.retry_max_interval,
             )
         except Exception as e:
-            raise GenerationException(str(e))
+            if type(e) == InvalidRequestError:
+                self._handle_excessive_tokens_error(e, prompt)
+            else:
+                raise GenerationException(str(e))
 
         response = response.choices[0].message.content
         return response
+
+    def _handle_excessive_tokens_error(self, e: InvalidRequestError, prompt: dict):
+        logger.error(
+            f'Handling Open AI excessive tokens requested error by decreasing max tokens for this request. ("{str(e)}")'
+        )
+        requested_tokens = int(re.findall(r"you requested (\d+) tokens", str(e))[0])
+        excessive_tokens = requested_tokens - self.model_max_tokens
+        old_max_tokens = self.openai_args["max_tokens"]
+        new_max_tokens = old_max_tokens - excessive_tokens
+        self.openai_args["max_tokens"] = new_max_tokens
+        logger.warning(
+            f"Decreased max tokens from {old_max_tokens} to {new_max_tokens}."
+        )
+        response = generate_with_retries(
+            retry_function=openai.ChatCompletion.create,
+            model_args=self.openai_args | prompt,
+            retry_max_attempts=self.retry_max_attempts,
+            retry_multiplier=self.retry_multiplier,
+            retry_min_interval=self.retry_min_interval,
+            retry_max_interval=self.retry_max_interval,
+        )
+        logger.warning(f"Restoring max tokens to {old_max_tokens}.")
+        self.openai_args["max_tokens"] = old_max_tokens
 
     def _batch_generate(self):
         pass
