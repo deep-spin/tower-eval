@@ -43,6 +43,8 @@ faiss-cpu = "^1.7.4"
 python-dotenv = "^1.0.0"
 bleurt-pytorch = {git = "https://github.com/lucadiliello/bleurt-pytorch.git"}
 google-cloud-aiplatform = "^1.40.0"
+lm_eval = {git = "https://github.com/EleutherAI/lm-evaluation-harness.git"}
+datasets = "^2.14.6"
 
 [tool.poetry.dev-dependencies]
 mock = ">=3.0.5,<4.0.0"

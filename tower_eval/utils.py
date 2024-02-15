@@ -2,6 +2,7 @@ import json
 import os
 import re
 import subprocess
+import time
 from pathlib import Path
 from typing import Dict, Iterable, List, Union
 
@@ -351,3 +352,13 @@ def text_to_label(
         return label, is_random
     else:
         return label
+
+
+def handle_subprocess(subprocess_args: List[str]):
+    try:
+        process = subprocess.Popen(subprocess_args)
+        while process.poll() is None:
+            time.sleep(1)
+        logger.info("Generation process has finished.")
+    except KeyboardInterrupt:
+        process.terminate()

@@ -12,9 +12,7 @@ import argparse
 import json
 import os
 import random
-import subprocess
 import sys
-import time
 from collections import defaultdict
 from copy import deepcopy
 from pathlib import Path
@@ -31,10 +29,69 @@ from tower_eval.tools.logging import wandb_utils
 from tower_eval.utils import (
     combine_metrics_args,
     get_eval_args_given_task,
+    handle_subprocess,
     make_dir_if_not_exists,
     parse_yaml_config,
     save_to_json,
 )
+
+
+def run_harness_evaluations(configs: dict):
+    logger.add(
+        sys.stderr,
+        colorize=True,
+        format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {message}",
+    )
+    config_to_save = deepcopy(configs)
+    devices = configs.get("devices", "0")
+    output_dir = Path(configs.get("output_dir", None))
+    # get args to pass to lm_harness (these are basically anything lm harness supports)
+    harness_args = configs.get("harness_args")
+    for model in configs.get("models"):
+        model_name = model["name"]
+        model_path = model["path"]
+        for task in configs.get("tasks"):
+            task_name = task.get("name")
+            subtasks = task.get("subtasks")
+            for subtask, subtask_args in subtasks.items():
+                output_path = (
+                    f"{output_dir}/{task_name}/{subtask}/{model_name}/evaluation.json"
+                )
+                if Path(output_path).exists():
+                    logger.info(
+                        f"Skipping evaluation for model {model_name} on task {task_name} and subtask {subtask} as the results already exist."
+                    )
+                    continue
+                os.environ["CUDA_VISIBLE_DEVICES"] = devices
+                subprocess_args = [
+                    "lm_eval",
+                    "--model",
+                    "vllm",
+                    "--model_args",
+                    f"pretrained={model_path}",
+                    "--tasks",
+                    subtask,
+                    "--output_path",
+                    output_path,
+                ]
+                # Update subprocess args to subtask-specific if there are any
+                if subtask_args is not None:
+                    # if we want specific arguments in this subtask
+                    subtask_args = combine_metrics_args(harness_args, subtask_args)
+                else:
+                    subtask_args = deepcopy(harness_args)
+                for k, v in subtask_args.items():
+                    if v is not None:
+                        subprocess_args.extend([k, v])
+                    else:
+                        subprocess_args.extend([k])
+                # run lm_evaluation_harness in subprocess
+                handle_subprocess(subprocess_args)
+                # save metadata
+                save_to_json(
+                    save_location=Path(output_path).parent / "metadata.json",
+                    data=config_to_save,
+                )
 
 
 def run_evaluations(configs: dict, wandb_project_name: str = None) -> dict:
@@ -273,24 +330,17 @@ def run_generations(configs: dict, config_path: str, config_type: str) -> dict:
         model_args = model.get("arguments")
         model_args = {} if not model_args else model_args
         current_dir = os.getcwd()
-        try:
-            process = subprocess.Popen(
-                [
-                    f"python",
-                    f"{current_dir}/tower_eval/tasks/generate.py",
-                    "--i",
-                    f"{str(i)}",
-                    "--config_path",
-                    f"{config_path}",
-                    "--config_type",
-                    f"{config_type}",
-                ]
-            )
-            while process.poll() is None:
-                time.sleep(1)
-            logger.info("Generation process has finished.")
-        except KeyboardInterrupt:
-            process.terminate()
+        subprocess_args = [
+            f"python",
+            f"{current_dir}/tower_eval/tasks/generate.py",
+            "--i",
+            f"{str(i)}",
+            "--config_path",
+            f"{config_path}",
+            "--config_type",
+            f"{config_type}",
+        ]
+        handle_subprocess(subprocess_args)
 
 
 def command_selector(args):
@@ -385,8 +435,14 @@ def command_selector(args):
         wandb_project_name = args.wandb_project_name
         run_generations(configs["gen"], args.config, config_type="gen-eval")
         run_evaluations(configs["eval"], wandb_project_name=wandb_project_name)
+
+    elif args.command == "lm_eval":
+        if args.config:
+            config_args = parse_yaml_config(args.config)
+            scores = run_harness_evaluations(config_args)
+            args.scores_output_file.write(json.dumps(scores, indent=4) + "\n")
     else:
-        print(f"ERROR: {args['command']} is not supported, yet.")
+        print(f"ERROR: {args.command} is not supported, yet.")
 
 
 if __name__ == "__main__":
@@ -396,7 +452,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "command",
-        choices=["index", "prepare", "evaluate", "generate", "gen-eval"],
+        choices=["index", "prepare", "evaluate", "generate", "gen-eval", "lm_eval"],
         help="Determines the command that you want to run."
         "you can prepare the test set so that the sentences are in the format of your prompt (prepare), or"
         "generate and evaluate a generated hypothesis (generate, evaluate, gen-eval).",

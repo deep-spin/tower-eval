@@ -1,5 +1,5 @@
 # tower-eval
-Repository for evaluation of LLMs on MT and related tasks. `tower-eval` also supports generation with [`vllm`](https://github.com/vllm-project/vllm) and the creation of custom test suites and instructions. 
+Repository for evaluation of LLMs on MT and related tasks. `tower-eval` also supports generation with [`vllm`](https://github.com/vllm-project/vllm), the creation of custom test suites and instructions, and a wrapper for `lm_eval` of [`lm-evaluation-harness`](https://github.com/EleutherAI/lm-evaluation-harness/tree/master).
 
 ## Contents
 
@@ -10,6 +10,7 @@ Repository for evaluation of LLMs on MT and related tasks. `tower-eval` also sup
   - [Evaluation](#evaluate-outputs)
   - [Generation followed by Evaluation](#run-inference-and-evaluation-consecutively)
   - [Prepare your own test instructions](#preparing-your-own-test-instructions)
+- [Using lm-evaluation-harness](#using-lm-evaluation-harness)
 
 
 ## Installation
@@ -454,3 +455,50 @@ Our example preapre config (`configs/examples/prepare.yaml`) contains an example
 - `ordered`: few-shots will be retrieved in an ordered fashion from the `dev.jsonl` pool. For exampe, if `n_fewshots` is 2, the first test instance will have the first two dev instances as fewshots, the second will have the third and forth, and so on. If dev is shorter than test, we loop back to the beginning.
 - `force_label_balance` can be used for tasks with name `ape` and `gec`. Will force `n_positive` exampes in the prompt that do not require correction.
 - `similarity` can be used for MT. Requires an index (docs are WIP). Retrieves the examples whose source is most similar with the test instance's source.
+
+
+## Using lm-evaluation-harness
+
+`tower-eval` wraps `lm-evaluation-harness`, adapting the `lm_eval` command to our config logic. Please check their docs for a basic understanding of how the original command works. To use the harness, call:
+
+```bash
+python -m tower_eval.cli lm_eval --config <PATH_TO_CONFIG>
+```
+
+All the arguments to `lm_eval` should be included in the config, which should look something like:
+
+```yaml
+output_dir: "test"
+harness_args: {
+  "--batch_size": "auto",
+  "--log_samples": null
+}
+devices: "1"
+tasks: 
+  - name: lm_harness
+    subtasks:
+      xwinograd_pt:
+      xwinograd_fr: {
+          "--num_fewshot": "5",
+        }
+models:
+  - name: TowerInstruct-7B-v0.1
+    path: Unbabel/TowerInstruct-7B-v0.1
+```
+>Each subtask should be spelled out exactly as expected by the harness.
+
+The crucial argument is `harness_args`. These arguments can be anything that is supported by the CLI of the original `lm_eval`, and they should be written exactly as they would be in the terminal. All keys will be included in the command; `null` values will be ignored. Notice how `model_args` is ommitted; it is filled out by us, given what is written after `path`
+
+Thus, the command above is equivalent to calling the `lm_eval` twice, like:
+
+```bash
+CUDA_VISIBLE_DEVICES=1 lm_eval --model vllm  --model_args pretrained=Unbabel/TowerInstruct-7B-v0.1 --model vllm --tasks xwinograd_pt --log_samples --batch_size auto
+CUDA_VISIBLE_DEVICES=1 lm_eval --model_args pretrained=Unbabel/TowerInstruct-7B-v0.1 --tasks xwinograd_fr --batch_size auto --log_samples --num_fewshot 5
+```
+>The `model` argument is set to vllm by default by us.
+
+`output_dir`, `tasks`, and `models` are considered for storage purposes, like in the `evaluate` command.
+
+This command saves the output file of the original `lm_eval` command in a folder called `<output_dir>/<task>/<subtask>/<model_name>`. Evaluation results will be saved in `evaluation.json`, the config will be saved in `metadata.json`, and other files will be saved in this folder if specified.
+
+See `configs/examples/lm_harness.yaml` for an example config.
