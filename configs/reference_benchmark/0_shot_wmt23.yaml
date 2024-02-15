@@ -12,7 +12,6 @@ tasks:
         eval_args:
           metrics:
             chrf:
-              asian_support: True
             bleu:
               tokenizer: zh
             comet:
