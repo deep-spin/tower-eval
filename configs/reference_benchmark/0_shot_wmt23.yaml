@@ -1,0 +1,48 @@
+gen_data_dir: "TowerEval-Data-v0.1/data/instructions_data/0_shot_tower_instruct_prompt"
+eval_data_dir: "TowerEval-Data-v0.1/data/raw_data"
+gen_output_dir: "TowerEval-Data-v0.1/generations/0_shot_tower_instruct_prompt"
+eval_output_dir: "TowerEval-Data-v0.1/evaluations/0_shot_tower_instruct_prompt"
+tasks: 
+  - name: mt
+    subtasks:
+      wmt23.en-de:
+      wmt23.en-ru:
+      wmt23.en-zh:
+        gen_args:
+        eval_args:
+          metrics:
+            chrf:
+              asian_support: True
+            bleu:
+              tokenizer: zh
+            comet:
+              batch_size: 16
+            comet_kiwi:
+              batch_size: 16
+            bleurt:
+              batch_size: 16
+      wmt23.de-en:
+      wmt23.ru-en:
+      wmt23.zh-en:
+    metrics:
+      chrf:
+      bleu:
+      comet:
+        batch_size: 16
+      xcomet:
+        batch_size: 16
+      comet_kiwi:
+        batch_size: 16
+      bleurt:
+        batch_size: 16
+      comet:
+        batch_size: 16
+models:
+  - name: <MODEL_NAME>
+    type: vllm
+    arguments:
+      model_dir: <HF_MODEL_PATH>
+      n_gpus: 1
+      max_tokens: 1024
+      run_async: True
+      batch_size: -1
