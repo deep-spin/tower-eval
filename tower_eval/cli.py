@@ -86,7 +86,9 @@ def run_harness_evaluations(configs: dict):
                     else:
                         subprocess_args.extend([k])
                 # run lm_evaluation_harness in subprocess
-                handle_subprocess(subprocess_args)
+                failed = handle_subprocess(subprocess_args)
+                if failed:
+                    sys.exit(1)
                 # save metadata
                 save_to_json(
                     save_location=Path(output_path).parent / "metadata.json",

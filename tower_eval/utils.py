@@ -360,5 +360,7 @@ def handle_subprocess(subprocess_args: List[str]):
         while process.poll() is None:
             time.sleep(1)
         logger.info("Generation process has finished.")
+        return 0
     except KeyboardInterrupt:
         process.terminate()
+        return 1

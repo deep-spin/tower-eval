@@ -16,4 +16,4 @@ tasks:
       flores.en-zh:
         prompt_args:
           lp0: English
-          lp1: Chinese (simplified)
+          lp1: Chinese
