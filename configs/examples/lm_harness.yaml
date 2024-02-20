@@ -27,20 +27,11 @@ tasks:
       xwinograd_pt:
       xwinograd_ru:
       xwinograd_zh:
-      xnli_ar:
-      xnli_bg:
       xnli_de:
-      xnli_el:
       xnli_en:
       xnli_es:
       xnli_fr:
-      xnli_hi:
       xnli_ru:
-      xnli_sw:
-      xnli_th:
-      xnli_tr:
-      xnli_ur:
-      xnli_vi:
       xnli_zh:
       arc_easy:
       arc_challenge: {

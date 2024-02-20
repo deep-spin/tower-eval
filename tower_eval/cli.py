@@ -62,6 +62,7 @@ def run_harness_evaluations(configs: dict):
                         f"Skipping evaluation for model {model_name} on task {task_name} and subtask {subtask} as the results already exist."
                     )
                     continue
+                logger.info(f"Evaluating {model_name} on {subtask}.")
                 os.environ["CUDA_VISIBLE_DEVICES"] = devices
                 subprocess_args = [
                     "lm_eval",
