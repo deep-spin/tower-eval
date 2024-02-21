@@ -1,0 +1,98 @@
+output_dir: <OUTPUT_DIR>
+harness_args: {
+  "--batch_size": "auto",
+  "--log_samples": null
+}
+devices: "3"
+tasks: 
+  - name: lm_harness
+    subtasks:
+      xstorycloze_en:
+      xstorycloze_es:
+      xstorycloze_ru:
+      xcopa_it:
+      xcopa_zh:
+      belebele_eng_Latn:
+      belebele_deu_Latn:
+      belebele_fra_Latn:
+      belebele_ita_Latn:
+      belebele_nld_Latn:
+      belebele_por_Latn:
+      belebele_rus_Cyrl:
+      belebele_spa_Latn:
+      belebele_zho_Hans:
+      belebele_kor_Hang:
+      xwinograd_en:
+      xwinograd_fr:
+      xwinograd_pt:
+      xwinograd_ru:
+      xwinograd_zh:
+      xnli_de:
+      xnli_en:
+      xnli_es:
+      xnli_fr:
+      xnli_ru:
+      xnli_zh:
+      arc_easy:
+      arc_challenge: {
+        "num_fewshot": "25"
+      }
+      arc_de: {
+        "num_fewshot": "25"
+      }
+      arc_es: {
+        "num_fewshot": "25"
+      }
+      arc_fr: {
+        "num_fewshot": "25"
+      }
+      arc_it: {
+        "num_fewshot": "25"
+      }
+      arc_nl: {
+        "num_fewshot": "25"
+      }
+      arc_pt: {
+        "num_fewshot": "25"
+      }
+      arc_ru: {
+        "num_fewshot": "25"
+      }
+      arc_zh: {
+        "num_fewshot": "25"
+      }
+      hellaswag:
+      hellaswag_de:
+      hellaswag_es:
+      hellaswag_fr:
+      hellaswag_it:
+      hellaswag_nl:
+      hellaswag_pt:
+      hellaswag_ru:
+      m_mmlu_de: {
+        "num_fewshot": "25"
+      }
+      m_mmlu_en: {
+        "num_fewshot": "25"
+      }
+      m_mmlu_es: {
+        "num_fewshot": "25"
+      }
+      m_mmlu_fr: {
+        "num_fewshot": "25"
+      }
+      m_mmlu_it: {
+        "num_fewshot": "25"
+      }
+      m_mmlu_nl: {
+        "num_fewshot": "25"
+      }
+      m_mmlu_pt: {
+        "num_fewshot": "25"
+      }
+      m_mmlu_ru: {
+        "num_fewshot": "25"
+      }
+models:
+  - name: TowerBase-7B-v0.1
+    path: Unbabel/TowerBase-7B-v0.1
