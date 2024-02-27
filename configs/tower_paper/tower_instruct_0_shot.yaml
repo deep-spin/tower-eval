@@ -1,7 +1,7 @@
-gen_data_dir: "TowerEval-Data-v0.1/data/instructions_data/5_shot"
+gen_data_dir: "TowerEval-Data-v0.1/data/instructions_data/0_shot_tower"
 eval_data_dir: "TowerEval-Data-v0.1/data/raw_data"
-gen_output_dir: "TowerEval-Data-v0.1/generations/5_shot"
-eval_output_dir: "TowerEval-Data-v0.1/evaluations/5_shot"
+gen_output_dir: "TowerEval-Data-v0.1/generations/0_shot_tower"
+eval_output_dir: "TowerEval-Data-v0.1/evaluations/0_shot_tower"
 tasks: 
   - name: mt
     subtasks:
@@ -70,52 +70,66 @@ tasks:
       bleu:
       comet:
         batch_size: 16
+  - name: ape
+    subtasks:
+      nllb_3b_wmt23.de-en:
+      nllb_3b_wmt23.en-de: 
+      nllb_3b_wmt23.en-zh: 
+        eval_args:
+          metrics:
+            ter:
+              asian_support: True
+            chrf:
+            bleu:
+              tokenizer: zh
+            comet:
+              batch_size: 16
+            comet_kiwi:
+              batch_size: 16
+      nllb_3b_wmt23.zh-en:
+      nllb_3b_wmt23.ru-en:
+      nllb_3b_wmt23.en-ru:
+    metrics:
+      ter:
+        asian_support: True
+      chrf:
+      comet:
+        batch_size: 16
+      comet_kiwi:
+        batch_size: 16
+      bleu:
+  - name: ner
+    subtasks:
+      multiconer2023.en:
+      multiconer2023.de:
+      multiconer2023.fr:
+      multiconer2023.es:
+      multiconer2023.it:
+      multiconer2023.pt:
+      multiconer2023.zh:
+    metrics:
+      f1sequence:
+        hypothesis_format: "text-tuple-list"
+        reference_format: "jsonl"
+        tokenize_hypothesis: False
+        default_noent_tag: "O"
+        valid_ner_tags: ["Person", "Location", "Group", "Product", "CreativeWorks", "Medical"]
 models:
-  - name: TowerBase-7B-v0.1
+  - name: TowerInstruct-7B-v0.2
     type: vllm
     arguments:
-      model_dir: Unbabel/TowerBase-7B-v0.1
+      model_dir: Unbabel/TowerInstruct-7B-v0.2
       n_gpus: 1
       max_tokens: 1024
       run_async: True
       batch_size: -1
-  - name: llama2-7b-hf
+      strip: False
+  - name: TowerInstruct-13B-v0.2
     type: vllm
     arguments:
-      model_dir: meta-llama/Llama-2-7b-hf
+      model_dir: Unbabel/TowerInstruct-7B-v0.2
       n_gpus: 1
       max_tokens: 1024
       run_async: True
       batch_size: -1
-  - name: llama2-13b-hf
-    type: vllm
-    arguments:
-      model_dir: meta-llama/Llama-2-13b-hf
-      n_gpus: 1
-      max_tokens: 1024
-      run_async: True
-      batch_size: -1
-  - name: alma-pretrained-13b
-    type: vllm
-    arguments:
-      model_dir: haoranxu/ALMA-13B
-      n_gpus: 1
-      max_tokens: 1024
-      run_async: True
-      batch_size: -1
-  - name: llama2-70b-hf
-    type: vllm
-    arguments:
-      model_dir: meta-llama/Llama-2-70b-hf
-      n_gpus: 2
-      max_tokens: 1024
-      run_async: True
-      batch_size: -1
-  - name: mixtral-8x7B-v0.1
-    type: vllm
-    arguments:
-      model_dir: mistralai/Mixtral-8x7B-v0.1
-      n_gpus: 2
-      max_tokens: 1024
-      run_async: True
-      batch_size: -1
+      strip: False

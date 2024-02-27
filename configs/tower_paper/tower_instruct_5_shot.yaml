@@ -1,0 +1,33 @@
+gen_data_dir: "TowerEval-Data-v0.1/data/instructions_data/5_shot_tower"
+eval_data_dir: "TowerEval-Data-v0.1/data/raw_data"
+gen_output_dir: "TowerEval-Data-v0.1/generations/5_shot_tower"
+eval_output_dir: "TowerEval-Data-v0.1/evaluations/5_shot_tower"
+tasks: 
+  - name: gec
+    subtasks:
+      conll14.en:
+      fm.de:
+      cowsl2h.es:
+    metrics:
+      errant:
+        tokenize_hypothesis: True
+      ter:
+models:
+  - name: TowerInstruct-7B-v0.2
+    type: vllm
+    arguments:
+      model_dir: Unbabel/TowerInstruct-7B-v0.2
+      n_gpus: 1
+      max_tokens: 1024
+      run_async: True
+      batch_size: -1
+      strip: False
+  - name: TowerInstruct-13B-v0.2
+    type: vllm
+    arguments:
+      model_dir: Unbabel/TowerInstruct-7B-v0.2
+      n_gpus: 1
+      max_tokens: 1024
+      run_async: True
+      batch_size: -1
+      strip: False
