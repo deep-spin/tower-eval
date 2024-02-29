@@ -1,7 +1,7 @@
-gen_data_dir: "TowerEval-Data-v0.1/data/instructions_data/0_shot_tower"
+gen_data_dir: "TowerEval-Data-v0.1/data/instructions_data/0_shot_tower_instruct"
 eval_data_dir: "TowerEval-Data-v0.1/data/raw_data"
-gen_output_dir: "TowerEval-Data-v0.1/generations/0_shot_tower"
-eval_output_dir: "TowerEval-Data-v0.1/evaluations/0_shot_tower"
+gen_output_dir: "TowerEval-Data-v0.1/generations/0_shot_tower_instruct"
+eval_output_dir: "TowerEval-Data-v0.1/evaluations/0_shot_tower_instruct"
 tasks: 
   - name: mt
     subtasks:
