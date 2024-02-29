@@ -70,6 +70,50 @@ tasks:
       bleu:
       comet:
         batch_size: 16
+  - name: ape
+    subtasks:
+      nllb_3b_wmt23.de-en:
+      nllb_3b_wmt23.en-de: 
+      nllb_3b_wmt23.en-zh: 
+        eval_args:
+          metrics:
+            ter:
+              asian_support: True
+            chrf:
+            bleu:
+              tokenizer: zh
+            comet:
+              batch_size: 16
+            comet_kiwi:
+              batch_size: 16
+      nllb_3b_wmt23.zh-en:
+      nllb_3b_wmt23.ru-en:
+      nllb_3b_wmt23.en-ru:
+    metrics:
+      ter:
+        asian_support: True
+      chrf:
+      comet:
+        batch_size: 16
+      comet_kiwi:
+        batch_size: 16
+      bleu:
+  - name: ner
+    subtasks:
+      multiconer2023.en:
+      multiconer2023.de:
+      multiconer2023.fr:
+      multiconer2023.es:
+      multiconer2023.it:
+      multiconer2023.pt:
+      multiconer2023.zh:
+    metrics:
+      f1sequence:
+        hypothesis_format: "text-tuple-list"
+        reference_format: "jsonl"
+        tokenize_hypothesis: False
+        default_noent_tag: "O"
+        valid_ner_tags: ["Person", "Location", "Group", "Product", "CreativeWorks", "Medical"]
 models:
   - name: gpt-3.5-turbo
     type: open-ai

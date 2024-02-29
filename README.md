@@ -4,7 +4,7 @@ Repository for evaluation of LLMs on MT and related tasks. `tower-eval` also sup
 ## Contents
 
 - [Installation](#installation)
-- [Replicating our benchmarks](#replicating-our-benchmarks)
+- [Replicating our benchmark](#replicating-our-benchmark)
 - [Usage Guide](#usage-guide)
   - [Generation](#run-inference)
   - [Evaluation](#evaluate-outputs)
@@ -40,7 +40,7 @@ and
 pip install vllm
 ```
 
-## Replicating our benchmarks
+## Replicating our benchmark
 
 First, download the test data from our huggingface repository, [TowerEval-Data](https://huggingface.co/datasets/Unbabel/TowerEval-Data-v0.1):
 
@@ -49,10 +49,10 @@ huggingface-cli download Unbabel/TowerEval-Data-v0.1 --repo-type dataset --local
 tar -xzf TowerEval-Data-v0.1/data.tar.gz -C TowerEval-Data-v0.1/
 ```
 
-To replicate the results in the [blogpost](https://unbabel.com/announcing-tower-an-open-multilingual-llm-for-translation-related-tasks/) about [Tower](https://huggingface.co/collections/Unbabel/tower-7b-v01-659eaedfe36e6dd29eb1805c), run:
+To replicate the benchmark in the body of our [paper](link), run:
 
 ```sh
-bash run_blogpost_benchmark.sh
+bash run_paper_benchmark.sh
 ```
 >Note: some slight differences between our reported results are expected.
 
@@ -72,7 +72,7 @@ models:
 ```
 >Note: the model architecture must be supported by vllm.
 
-For example, if you want to test your model on our 5-shot MT setting, add the corresponding entry to `configs/blogpost/5_shot_mt.yaml` and run `python -m tower_eval.cli gen-eval --config configs/blogpost/5_shot_mt.yaml`.
+For example, if you want to test your model on our 5-shot setting, add the corresponding entry to `configs/tower_paper/5_shot_generic_models.yaml` and run `python -m tower_eval.cli gen-eval --config configs/tower_paper/5_shot_generic_models.yaml`.
 
 More details on general usage in the next section.
 
