@@ -48,6 +48,7 @@ class OpenAI(Generator):
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
+        self.run_async = False  # only sync calls are supported
         # Set openai settings
         model = kwargs.get("model", model)
         temperature = kwargs.get("temperature", temperature)
@@ -92,7 +93,7 @@ class OpenAI(Generator):
             str: Returns the response used.
         """
         try:
-            prompt = {"messages": [{"role": "user", "content": input_line.strip()}]}
+            prompt = {"messages": [{"role": "user", "content": input_line}]}
             response = generate_with_retries(
                 retry_function=openai.ChatCompletion.create,
                 model_args=self.openai_args | prompt,

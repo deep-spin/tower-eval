@@ -1,5 +1,6 @@
 # tower-eval
 Repository for evaluation of LLMs on MT and related tasks. `tower-eval` also supports generation with [`vllm`](https://github.com/vllm-project/vllm), the creation of custom test suites and instructions, and a wrapper for `lm_eval` of [`lm-evaluation-harness`](https://github.com/EleutherAI/lm-evaluation-harness/tree/master).
+If you use this repo, please [cite](#citation) our [work](https://arxiv.org/abs/2402.17733).
 
 ## Contents
 
@@ -158,7 +159,7 @@ The command will, for each model under `models`:
 3. Save outputs to `<OUTPUT_DIR>/<TASK>/<SUBTASK>/<MODEL_TYPE>/<MODEL_NAME>/generation.txt` (each line maps to an instance in `instructions.txt`).
 
 Currently available metrics are:
-`vllm`, `open-ai`, and respective arguments (check [Models section](#ModelsSection)).
+`vllm`, `open-ai`, `anthropic`, `vertex-ai`, and respective arguments (check [Models section](#ModelsSection)).
 
 You can find a sample config file of the generate task in `configs/examples/generate.yaml`.
 
@@ -269,7 +270,7 @@ In your config file you need to define the following parameteres:
   - `batch_size`: **[vllm only]** batch size if `run_async` is True; set to -1 to let vllm handle generations most efficiently.
   - `quantization` **[vllm only]** whether to quantize the model. See vllm docs for more information.
   - `vllm_sampling_params`: **[vllm only]** vllm sampling kwargs; see vllm docs for all the arguments you can pass.
-  - `model`: **[OpenAI and VertexAI only]** This field is only used for the OpenAI based models and gets the following values: `gpt-3.5-turbo`, `gpt-4`.
+  - `model`: **[OpenAI, VertexAI, and Anthropic only]** This field is only used for the OpenAI based models and gets the following values: `gpt-3.5-turbo`, `gpt-4`.
   - `temperature`: **[OpenAI and VertexAI only]** This field defines the temprature that you want to use when calling OpenAI models and controls the randomness of the generation.
   - `top_p`: **[OpenAI and VertexAI only]** Defines the cumulative probability cutoff for token selection.
   - `frequency_penalty`: **[OpenAI only]** Controls the OpenAI models' likelihood to repeat the same line verbatim.
@@ -502,3 +503,17 @@ CUDA_VISIBLE_DEVICES=1 lm_eval --model_args pretrained=Unbabel/TowerInstruct-7B-
 This command saves the output file of the original `lm_eval` command in a folder called `<output_dir>/<task>/<subtask>/<model_name>`. Evaluation results will be saved in `evaluation.json`, the config will be saved in `metadata.json`, and other files will be saved in this folder if specified.
 
 See `configs/examples/lm_harness.yaml` for an example config.
+
+
+## Citation 
+
+```bibtex
+@misc{tower_llm_2024,
+      title={Tower: An Open Multilingual Large Language Model for Translation-Related Tasks}, 
+      author={Duarte M. Alves and José Pombal and Nuno M. Guerreiro and Pedro H. Martins and João Alves and Amin Farajian and Ben Peters and Ricardo Rei and Patrick Fernandes and Sweta Agrawal and Pierre Colombo and José G. C. de Souza and André F. T. Martins},
+      year={2024},
+      eprint={2402.17733},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL}
+}
+```

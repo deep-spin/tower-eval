@@ -45,6 +45,7 @@ bleurt-pytorch = {git = "https://github.com/lucadiliello/bleurt-pytorch.git"}
 google-cloud-aiplatform = "^1.40.0"
 lm_eval = {git = "https://github.com/EleutherAI/lm-evaluation-harness.git"}
 datasets = "^2.14.6"
+anthropic = "^0.17.0"
 
 [tool.poetry.dev-dependencies]
 mock = ">=3.0.5,<4.0.0"
