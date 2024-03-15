@@ -62,11 +62,7 @@ class VLLM(Generator):
         model_output = self.model.generate(
             input_lines, self.sampling_params, use_tqdm=True
         )
-        generations = [
-            output.outputs[0].text.strip("</s>").strip().strip("\\n")
-            for output in model_output
-        ]
-
+        generations = [output.outputs[0].text for output in model_output]
         return generations
 
     @staticmethod
