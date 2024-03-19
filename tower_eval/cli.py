@@ -19,6 +19,7 @@ from pathlib import Path
 
 import numpy as np
 from loguru import logger
+
 from tower_eval.metrics import available_metrics
 from tower_eval.metrics.comet import DEFAULT_COMET_MODEL
 from tower_eval.models import available_models

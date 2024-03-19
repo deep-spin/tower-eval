@@ -9,6 +9,7 @@ from typing import Dict, Iterable, List, Union
 import numpy as np
 import pandas as pd
 import spacy
+import tqdm
 import yaml
 from loguru import logger
 from mosestokenizer import MosesDetokenizer, MosesTokenizer
@@ -354,13 +355,33 @@ def text_to_label(
         return label
 
 
-def handle_subprocess(subprocess_args: List[str]):
-    try:
-        process = subprocess.Popen(subprocess_args)
-        while process.poll() is None:
-            time.sleep(1)
-        logger.info("Generation process has finished.")
-        return 0
-    except KeyboardInterrupt:
-        process.terminate()
-        return 1
+def handle_subprocess(subprocess_args: List[str], check_output: bool = False):
+    if check_output:
+        process = subprocess.Popen(
+            subprocess_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
+        )
+        output = ""
+
+        # Read and print the output in real-time
+        for line in iter(process.stdout.readline, ""):
+            print(line, end="")  # Print each line as it's received
+            output += line  # Append each line to the output variable
+    else:
+        try:
+            process = subprocess.Popen(subprocess_args)
+            while process.poll() is None:
+                time.sleep(1)
+            logger.info("Generation process has finished.")
+            output = 0
+        except KeyboardInterrupt:
+            process.terminate()
+            output = 1
+    return output
+
+
+def tokenize_text(references, tokenizer):
+    tokenized_prompts = []
+    logger.info(f"Tokenizing text...")
+    for reference in tqdm.tqdm(references):
+        tokenized_prompts.append(tokenizer.encode(reference))
+    return tokenized_prompts
