@@ -502,7 +502,7 @@ CUDA_VISIBLE_DEVICES=1 lm_eval --model_args pretrained=Unbabel/TowerInstruct-7B-
 
 This command saves the output file of the original `lm_eval` command in a folder called `<output_dir>/<task>/<subtask>/<model_name>`. Evaluation results will be saved in `evaluation.json`, the config will be saved in `metadata.json`, and other files will be saved in this folder if specified.
 
-See `configs/examples/lm_harness.yaml` for an example config.
+See `configs/examples/lm_harness.yaml` for an example configuration.
 
 
 ## Citation 
