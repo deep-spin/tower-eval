@@ -32,8 +32,8 @@ class Anthropic(Generator):
         top_p = kwargs.get("top_p", top_p)
         max_tokens = kwargs.get("max_tokens", max_tokens)
         stop_sequences = kwargs.get("stop_sequences", stop_sequences)
-        system_prompt = kwargs.get("system_prompt", None)
-        self.anthropic_args = {
+        system_prompt = system_prompt
+        self.model_args = {
             "model": model,
             "temperature": temperature,
             "top_p": top_p,
@@ -41,7 +41,7 @@ class Anthropic(Generator):
             "stop_sequences": stop_sequences,
         }
         if system_prompt is not None:
-            self.anthropic_args["system_prompt"] = system_prompt
+            self.model_args["system"] = system_prompt
 
         # Generations object / retry args
         self.client = anthropic.Anthropic(
@@ -66,7 +66,7 @@ class Anthropic(Generator):
         prompt = {"messages": [{"role": "user", "content": input_line}]}
         response = generate_with_retries(
             retry_function=self.client.messages.create,
-            model_args=self.anthropic_args | prompt,
+            model_args=self.model_args | prompt,
             retry_max_attempts=self.retry_max_attempts,
             retry_multiplier=self.retry_multiplier,
             retry_min_interval=self.retry_min_interval,

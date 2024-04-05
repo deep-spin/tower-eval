@@ -22,6 +22,7 @@ class VLLM(Generator):
         run_async: bool = True,
         batch_size: int = 16,
         quantization: str = None,  # "awq", "gptq" or "squeezellm"
+        trust_remote_code: bool = True,
         vllm_sampling_params: dict = {},  # see vllm SamplingParams and pass desired kwargs in yaml
         **kwargs
     ) -> None:
@@ -41,6 +42,7 @@ class VLLM(Generator):
         self.batch_size = batch_size
         self.quantization = quantization
         self.n_gpus = n_gpus
+        self.trust_remote_code = trust_remote_code
         self.sampling_params = SamplingParams(
             stop=self.stop_sequences,
             max_tokens=self.max_tokens,
@@ -51,8 +53,9 @@ class VLLM(Generator):
             model=self.model_dir,
             quantization=self.quantization,
             seed=self.seed,
-            trust_remote_code=True,
+            trust_remote_code=self.trust_remote_code,
             tensor_parallel_size=self.n_gpus,
+            gpu_memory_utilization=0.7,
         )
 
     def _generate(self, input_line: str) -> str:

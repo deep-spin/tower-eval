@@ -45,6 +45,7 @@ class OpenAI(Generator):
         retry_multiplier: int = 1,
         stop_sequences: list[str] = ["<|endoftext|>", "\n", "\\n"],
         run_async: bool = False,
+        system_prompt: str = None,
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
@@ -57,6 +58,7 @@ class OpenAI(Generator):
         frequency_penalty = kwargs.get("frequency_penalty", frequency_penalty)
         presence_penalty = kwargs.get("presence_penalty", presence_penalty)
         stop_sequences = kwargs.get("stop_sequences", stop_sequences)
+        self.system_prompt = system_prompt
         self.run_async = run_async
         self.openai_args = {
             "model": model,
@@ -93,7 +95,15 @@ class OpenAI(Generator):
             str: Returns the response used.
         """
         try:
-            prompt = {"messages": [{"role": "user", "content": input_line}]}
+            if self.system_prompt is not None:
+                prompt = {
+                    "messages": [
+                        {"role": "system", "content": self.system_prompt},
+                        {"role": "user", "content": input_line},
+                    ]
+                }
+            else:
+                prompt = {"messages": [{"role": "user", "content": input_line}]}
             response = generate_with_retries(
                 retry_function=openai.ChatCompletion.create,
                 model_args=self.openai_args | prompt,

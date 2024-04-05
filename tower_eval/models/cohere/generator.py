@@ -33,7 +33,7 @@ class Cohere(Generator):
         max_tokens = kwargs.get("max_tokens", max_tokens)
         stop_sequences = kwargs.get("stop_sequences", stop_sequences)
         system_prompt = system_prompt
-        self.cohere_args = {
+        self.model_args = {
             "model": model,
             "temperature": temperature,
             "p": top_p,
@@ -41,7 +41,7 @@ class Cohere(Generator):
             "stop_sequences": stop_sequences,
         }
         if system_prompt is not None:
-            self.cohere_args["preamble"] = system_prompt
+            self.model_args["preamble"] = system_prompt
 
         # Generations object / retry args
         self.client = cohere.Client(
@@ -66,7 +66,7 @@ class Cohere(Generator):
         prompt = {"message": input_line}
         response = generate_with_retries(
             retry_function=self.client.chat,
-            model_args=self.cohere_args | prompt,
+            model_args=self.model_args | prompt,
             retry_max_attempts=self.retry_max_attempts,
             retry_multiplier=self.retry_multiplier,
             retry_min_interval=self.retry_min_interval,
