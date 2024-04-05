@@ -35,12 +35,6 @@ poetry install
 ```
 >Python 3.10 and Poetry 1.6.1 are known to work; Poetry 1.7.1 is known to **not** work.
 
-and 
-
-```sh
-pip install vllm
-```
-
 ## Replicating our benchmark
 
 First, download the test data from our huggingface repository, [TowerEval-Data](https://huggingface.co/datasets/Unbabel/TowerEval-Data-v0.1):
