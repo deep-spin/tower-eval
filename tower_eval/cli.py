@@ -88,7 +88,13 @@ def run_harness_evaluations(configs: dict):
                     else:
                         subprocess_args.extend([k])
                 # run lm_evaluation_harness in subprocess
-                failed = handle_subprocess(subprocess_args)
+                if Path(output_path).exists():
+                    logger.info(
+                        f"Skipping evaluation for model {model_name} on task {task_name} and subtask {subtask} as the results already exist."
+                    )
+                    continue
+                else:
+                    failed = handle_subprocess(subprocess_args)
                 if failed:
                     sys.exit(1)
                 # save metadata

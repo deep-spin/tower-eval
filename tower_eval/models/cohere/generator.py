@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
 import os
 
-import anthropic
+import cohere
 from tower_eval.models.inference_handler import Generator
 from tower_eval.utils import generate_with_retries
 
 
-class Anthropic(Generator):
-    """Anthropic API wrapper."""
+class Cohere(Generator):
+    """Cohere API wrapper."""
 
     def __init__(
         self,
         api_key: str = None,
-        model: str = "claude-3-sonnet-20240229",
+        model: str = "command-r-plus",
         temperature: float = 0.0,
         top_p: float = 1.0,
         max_tokens: int = 1024,
@@ -26,7 +26,7 @@ class Anthropic(Generator):
     ) -> None:
         super().__init__(**kwargs)
         self.run_async = False  # only sync calls are supported
-        # Set anthropic settings
+        # Set cohere settings
         model = kwargs.get("model", model)
         temperature = kwargs.get("temperature", temperature)
         top_p = kwargs.get("top_p", top_p)
@@ -36,17 +36,17 @@ class Anthropic(Generator):
         self.model_args = {
             "model": model,
             "temperature": temperature,
-            "top_p": top_p,
+            "p": top_p,
             "max_tokens": max_tokens,
             "stop_sequences": stop_sequences,
         }
         if system_prompt is not None:
-            self.model_args["system"] = system_prompt
+            self.model_args["preamble"] = system_prompt
 
         # Generations object / retry args
-        self.client = anthropic.Anthropic(
-            # defaults to os.environ.get("ANTHROPIC_API_KEY")
-            api_key=os.environ.get("ANTHROPIC_API_KEY", api_key),
+        self.client = cohere.Client(
+            # defaults to os.environ.get("COHERE_API_KEY")
+            os.environ.get("COHERE_API_KEY", api_key),
         )
         self.retry_max_attempts = kwargs.get("retry_max_attempts", retry_max_attempts)
         self.retry_max_interval = kwargs.get("retry_max_interval", retry_max_interval)
@@ -54,7 +54,7 @@ class Anthropic(Generator):
         self.retry_multiplier = kwargs.get("retry_multiplier", retry_multiplier)
 
     def _generate(self, input_line: str) -> str:
-        """It calls the Chat completion function of anthropic.
+        """It calls the Chat completion function of cohere.
 
         Args:
             prompt (str): Prompt for the anthropic model
@@ -63,9 +63,9 @@ class Anthropic(Generator):
         Returns:
             str: Returns the response used.
         """
-        prompt = {"messages": [{"role": "user", "content": input_line}]}
+        prompt = {"message": input_line}
         response = generate_with_retries(
-            retry_function=self.client.messages.create,
+            retry_function=self.client.chat,
             model_args=self.model_args | prompt,
             retry_max_attempts=self.retry_max_attempts,
             retry_multiplier=self.retry_multiplier,
@@ -73,9 +73,7 @@ class Anthropic(Generator):
             retry_max_interval=self.retry_max_interval,
         )
 
-        response = response.content[0].text.split("\n\n")[
-            -1
-        ]  # hacky way to remove the agent's preamble in the response
+        response = response.text
         return response
 
     def _batch_generate(self):
@@ -83,4 +81,4 @@ class Anthropic(Generator):
 
     @staticmethod
     def model_name():
-        return "anthropic"
+        return "cohere"
