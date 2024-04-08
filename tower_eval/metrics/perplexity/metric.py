@@ -78,7 +78,7 @@ class Perplexity(Metric):
         perplexities, mean_perplexity = self.parse_subprocess_output(output)
         assert perplexities is not None and mean_perplexity is not None, (
             f"Error when parsing the output of the perplexity subprocess, aborting."
-            f"Output: {output.stdout}"
+            f"Output: {output}"
         )
         result = PerplexityResult(
             {
