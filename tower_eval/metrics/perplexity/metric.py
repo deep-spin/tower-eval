@@ -114,7 +114,7 @@ class Perplexity(Metric):
             l_probs = []
             # ignore very first token, for which there is no logprob
             for l_prob_dict in output.prompt_logprobs[1:]:
-                l_probs.append(list(l_prob_dict.values())[0])
+                l_probs.append(list(l_prob_dict.values())[0].logprob)
             perplexities.append(np.exp(-(sum(l_probs) / len(l_probs))))
         mean_perplexity = np.mean(perplexities).astype(float)
 
