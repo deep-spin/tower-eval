@@ -12,7 +12,7 @@ def main(gold_data_path: str, model_id: str, max_model_context: int):
     references = gold_data["text"]
 
     # vllm
-    llm = vllm.LLM(model=model_id, enforce_eager=True)
+    llm = vllm.LLM(model=model_id, enforce_eager=True, gpu_memory_utilization=0.9)
     tokenizer = llm.get_tokenizer()
     sampling_params = vllm.SamplingParams(
         max_tokens=1, temperature=0.0, prompt_logprobs=1

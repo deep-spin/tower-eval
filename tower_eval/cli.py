@@ -70,7 +70,7 @@ def run_harness_evaluations(configs: dict):
                     "--model",
                     "vllm",
                     "--model_args",
-                    f"pretrained={model_path}",
+                    f"pretrained={model_path},gpu_memory_utilization=0.5",
                     "--tasks",
                     subtask,
                     "--output_path",
