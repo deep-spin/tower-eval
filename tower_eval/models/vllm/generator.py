@@ -16,7 +16,6 @@ class VLLM(Generator):
         self,
         max_tokens: int = 1024,
         stop_sequences: list = ["\n", "\\n", "</s>"],
-        do_sample: bool = False,
         seed: int = 42,
         n_gpus: int = 1,
         run_async: bool = True,
@@ -24,6 +23,7 @@ class VLLM(Generator):
         quantization: str = None,  # "awq", "gptq" or "squeezellm"
         trust_remote_code: bool = True,
         gpu_memory_utilization: float = 0.9,
+        temperature: float = 0.0,  # greedy by default
         vllm_sampling_params: dict = {},  # see vllm SamplingParams and pass desired kwargs in yaml
         **kwargs
     ) -> None:
@@ -33,10 +33,7 @@ class VLLM(Generator):
             self.stop_sequences = None
         else:
             self.stop_sequences = stop_sequences
-        self.do_sample = do_sample
-        self.temperature = vllm_sampling_params.get(
-            "temperature", 1.0 if do_sample else 0
-        )
+        self.temperature = temperature
         self.seed = seed
         self.model_dir = kwargs.get("model_dir")
         self.run_async = run_async
