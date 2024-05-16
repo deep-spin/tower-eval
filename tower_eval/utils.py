@@ -163,6 +163,7 @@ def write_lines(
     path: PathInput,
     lines: Iterable[str],
     escape_newline: bool = False,
+    escape_return_char: bool = True,
 ) -> None:
     """Writes lines to a file.
 
@@ -177,18 +178,21 @@ def write_lines(
     if isinstance(path, str):
         path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    if escape_newline:
-        out_lines = []
-        for i, line in enumerate(lines):
-            if "\r" in line:
-                logger.opt(ansi=True).warning(
-                    f"Detected carriage return in line {i} (\\r). This may cause errors downstream. Replacing with empty string."
-                )
-                line = line.replace("\r", "")
-            out_lines.append(line.replace("\n", "\\n"))
-        lines = out_lines
+    out_lines = []
+    for i, line in enumerate(lines):
+        if escape_return_char:
+            logger.opt(ansi=True).warning(
+                f"Detected carriage return in line {i} (\\r). This may cause errors downstream. Escaping. This behaviour is the default; you can turn it off with escape_return_char."
+            )
+            line = line.replace("\r", "\\r")
+        if escape_newline:
+            logger.opt(ansi=True).warning(
+                f"Found new line in line {i} (\\n). This may cause errors downstream. Escaping."
+            )
+            line = line.replace("\n", "\\n")
+        out_lines.append(line)
     with open(path, "w") as f:
-        f.writelines((f"{l}\n" for l in lines))
+        f.writelines((f"{l}\n" for l in out_lines))
 
 
 def combine_metrics_args(task_metric: dict, subtask_metric: dict) -> dict:
