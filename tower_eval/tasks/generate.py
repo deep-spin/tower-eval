@@ -4,7 +4,7 @@ from pathlib import Path
 from jsonargparse import CLI
 from loguru import logger
 from tower_eval.models import available_models
-from tower_eval.utils import make_dir_if_not_exists, parse_yaml_config, save_to_json
+from tower_eval.utils import make_dir_if_not_exists, parse_yaml_config, save_to_json, get_langs
 
 
 def parse_gen_eval_config(config_path: str) -> dict:
@@ -77,9 +77,10 @@ def generate(i: int, config_path: str, config_type: str) -> None:
                 f"Running inference for task: <yellow> {task_name} </yellow>, subtask: <green> {subtask} </green> with model: <red> {model_type}/{model_name} </red> saving to: <red> {output_dir} </red>"
             )
             make_dir_if_not_exists(output_file)
-            # seq2seq models and external vendors require language pair information
-            if model_type == "seq2seq" or model_type == "externalvendor":
-                src_lang, tgt_lang = subtask.split(".")[-1].split("-")
+            if task_name in ["mt", "ape"]:
+                lp = subtask.split(".")[-1]
+                src_lang, tgt_lang = get_langs(lp)
+
                 model.source_language = src_lang
                 model.target_language = tgt_lang
             model.generation_with_resume(input_file=input_file, output_file=output_file)
