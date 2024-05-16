@@ -221,7 +221,7 @@ def read_lines(path: PathInput, unescape_newline: bool = False) -> List[str]:
         unescape_newline: Whether to unescape newlines.
     Returns:
         The lines in the file."""
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         lines = [l[:-1] for l in f.readlines()]
     if unescape_newline:
         lines = [l.replace("\\n", "\n") for l in lines]
@@ -385,3 +385,13 @@ def tokenize_text(references, tokenizer):
     for reference in tqdm.tqdm(references):
         tokenized_prompts.append(tokenizer.encode(reference))
     return tokenized_prompts
+
+def get_langs(lp):
+    # TODO: This has to be updated to account for more languages
+    valid_langs = ["de", "en-us", "en-gb", "en-uk", "en", "es-latam","es", "fr", "it", "ko", "nl", "pl", "pt-br", "pt", "ru", "zh-CN", "zh"]
+    lang_pattern = "|".join(valid_langs)
+    lp_pattern = rf'^({lang_pattern})-({lang_pattern})$'
+    match = re.match(lp_pattern, lp)
+    src_lang = match.group(1)
+    trg_lang = match.group(2)
+    return src_lang, trg_lang
