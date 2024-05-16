@@ -178,7 +178,15 @@ def write_lines(
         path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     if escape_newline:
-        lines = (l.replace("\n", "\\n") for l in lines)
+        out_lines = []
+        for i, line in enumerate(lines):
+            if "\r" in line:
+                logger.opt(ansi=True).warning(
+                    f"Detected carriage return in line {i} (\\r). This may cause errors downstream. Replacing with empty string."
+                )
+                line = line.replace("\r", "")
+            out_lines.append(line.replace("\n", "\\n"))
+        lines = out_lines
     with open(path, "w") as f:
         f.writelines((f"{l}\n" for l in lines))
 
