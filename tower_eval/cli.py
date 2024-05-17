@@ -350,7 +350,11 @@ def run_generations(configs: dict, config_path: str, config_type: str) -> dict:
             "--config_type",
             f"{config_type}",
         ]
-        handle_subprocess(subprocess_args)
+        failure = handle_subprocess(subprocess_args)
+        if failure:
+            logger.error(
+                f"{model['name']} has run into an error. Double check generations before running evaluations."
+            )
 
 
 def command_selector(args):

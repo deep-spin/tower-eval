@@ -368,6 +368,7 @@ def text_to_label(
 
 
 def handle_subprocess(subprocess_args: List[str], check_output: bool = False):
+    output = 1
     if check_output:
         process = subprocess.Popen(
             subprocess_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
@@ -387,7 +388,6 @@ def handle_subprocess(subprocess_args: List[str], check_output: bool = False):
             output = 0
         except KeyboardInterrupt:
             process.terminate()
-            output = 1
     return output
 
 

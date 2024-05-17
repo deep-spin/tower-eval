@@ -149,6 +149,10 @@ class ErrorSpanDetectionMetric(Metric):
             generations = read_lines(hypotheses, unescape_newline=True)
             hypotheses_list = self.parse_generations(generations, mts, self.hyp_type)
 
+        assert len(hypotheses) == len(
+            references_list
+        ), f"The number of hypotheses {len(hypotheses)} and rows in the gold data {len(references_list)} should be the same."
+
         return hypotheses_list, references_list
 
     def process_result(self):
