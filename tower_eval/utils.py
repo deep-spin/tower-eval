@@ -181,14 +181,16 @@ def write_lines(
     out_lines = []
     for i, line in enumerate(lines):
         if escape_return_char:
-            logger.opt(ansi=True).warning(
-                f"Detected carriage return in line {i} (\\r). This may cause errors downstream. Escaping. This behaviour is the default; you can turn it off with escape_return_char."
-            )
+            if "\r" in line:
+                logger.opt(ansi=True).warning(
+                    f"Detected carriage return in line {i} (\\r). This may cause errors downstream. Escaping. This behaviour is the default; you can turn it off with escape_return_char."
+                )
             line = line.replace("\r", "\\r")
         if escape_newline:
-            logger.opt(ansi=True).warning(
-                f"Found new line in line {i} (\\n). This may cause errors downstream. Escaping."
-            )
+            if "\n" in line:
+                logger.opt(ansi=True).warning(
+                    f"Found new line in line {i} (\\n). This may cause errors downstream. Escaping."
+                )
             line = line.replace("\n", "\\n")
         out_lines.append(line)
     with open(path, "w") as f:
@@ -398,11 +400,30 @@ def tokenize_text(references, tokenizer):
         tokenized_prompts.append(tokenizer.encode(reference))
     return tokenized_prompts
 
+
 def get_langs(lp):
     # TODO: This has to be updated to account for more languages
-    valid_langs = ["de", "en-us", "en-gb", "en-uk", "en", "es-latam","es", "fr", "it", "ko", "nl", "pl", "pt-br", "pt", "ru", "zh-CN", "zh"]
+    valid_langs = [
+        "de",
+        "en-us",
+        "en-gb",
+        "en-uk",
+        "en",
+        "es-latam",
+        "es",
+        "fr",
+        "it",
+        "ko",
+        "nl",
+        "pl",
+        "pt-br",
+        "pt",
+        "ru",
+        "zh-CN",
+        "zh",
+    ]
     lang_pattern = "|".join(valid_langs)
-    lp_pattern = rf'^({lang_pattern})-({lang_pattern})$'
+    lp_pattern = rf"^({lang_pattern})-({lang_pattern})$"
     match = re.match(lp_pattern, lp)
     src_lang = match.group(1)
     trg_lang = match.group(2)
