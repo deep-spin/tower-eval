@@ -73,7 +73,7 @@ class Metric(ABC):
         gold_data = load_jsonl_file(data_path)
         assert len(hypotheses) == len(
             gold_data
-        ), f"The number of hypotheses {len(hypotheses)} and rows in the gold data {len(gold_data)} should be the same."
+        ), f"The number of hypotheses ({len(hypotheses)}) and rows in the gold data ({len(gold_data)}) should be the same."
         gold_data = list_to_dict(gold_data)
 
         return hypotheses, gold_data
