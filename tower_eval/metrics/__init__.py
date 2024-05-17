@@ -18,8 +18,6 @@ from tower_eval.metrics.pearson.metric import PEARSON
 from tower_eval.metrics.perplexity.metric import Perplexity
 from tower_eval.metrics.spearman.metric import SPEARMAN
 from tower_eval.metrics.ter.metric import TER
-from tower_eval.metrics.tydiqa_exact_match.metric import TYDIQAExactMatch
-from tower_eval.metrics.tydiqa_f1.metric import TYDIQAF1
 from tower_eval.metrics.xcomet.metric import XCOMET
 
 __all__ = [
@@ -39,8 +37,6 @@ __all__ = [
     ErrorSpanDetectionF1,
     ErrorSpanDetectionRecall,
     ErrorSpanDetectionPrecision,
-    TYDIQAF1,
-    TYDIQAExactMatch,
     Perplexity,
 ]
 
