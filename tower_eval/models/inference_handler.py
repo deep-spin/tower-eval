@@ -1,4 +1,5 @@
 import os
+import time
 from abc import ABC, abstractmethod
 
 from loguru import logger
@@ -7,6 +8,8 @@ from tower_eval.utils import (
     log_response,
     read_lines,
     write_lines,
+    load_json_file,
+    save_to_json
 )
 from tqdm import tqdm
 
@@ -46,6 +49,8 @@ class Generator(ABC):
         self,
         output_file: str,
         input_file: str,
+        metadata: dict,
+        metadata_file: str
     ):
         """
         Writes generated output to file, resuming from last line generated.
@@ -57,6 +62,13 @@ class Generator(ABC):
             processed_lines = read_lines(output_file, unescape_newline=True)
         else:
             processed_lines = []
+        # We assume that if the metadata file exists it already contains the information of the generation times.
+        # If it doesn't exist, then the metadata will be the config of the task and we will add the generation_time field to it
+        if os.path.exists(metadata_file):
+            metadata = load_json_file(metadata_file)
+        else:
+            metadata["generation_time"] = []
+
         num_processed_lines = get_num_processed_lines(output_file)
         assert (
             num_processed_lines <= total_lines
@@ -76,19 +88,28 @@ class Generator(ABC):
             with tqdm(initial=num_processed_lines, total=total_lines) as pbar:
                 for batch_id in range(0, len(input_lines), inference_batch_size):
                     batch = input_lines[batch_id : batch_id + inference_batch_size]
+                    start_time = time.time()
                     responses = self._batch_generate(batch)
+                    end_time = time.time()
+                    metadata["generation_time"].append(end_time - start_time)
+
                     for response_id, response in enumerate(responses):
                         processed_lines.append(response.strip())
                         # Calculate the number of responses processed so far
                         step = batch_id * inference_batch_size + response_id
                         log_response(response, step=step, lim=10)
                     write_lines(output_file, processed_lines, escape_newline=True)
+                    save_to_json(metadata_file, metadata)
                     pbar.update(len(batch))
         else:
             for i, input_line in enumerate(
                 tqdm(input_lines, initial=num_processed_lines, total=total_lines)
             ):
+                start_time = time.time()
                 response = self._generate(input_line)
+                end_time = time.time()
+                metadata["generation_time"].append(end_time - start_time)
                 processed_lines.append(response.strip())
                 write_lines(output_file, processed_lines, escape_newline=True)
+                save_to_json(metadata_file, metadata)
                 log_response(response, step=i, lim=10)
