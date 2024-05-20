@@ -183,13 +183,13 @@ def write_lines(
         if escape_return_char:
             if "\r" in line:
                 logger.opt(ansi=True).warning(
-                    f"Detected carriage return in line {i} (\\r). This may cause errors downstream. Escaping. This behaviour is the default; you can turn it off with escape_return_char."
+                    f"Detected carriage return in line {i + 1} (\\r). This may cause errors downstream. Escaping. This behaviour is the default; you can turn it off with escape_return_char."
                 )
             line = line.replace("\r", "\\r")
         if escape_newline:
             if "\n" in line:
                 logger.opt(ansi=True).warning(
-                    f"Found new line in line {i} (\\n). This may cause errors downstream. Escaping."
+                    f"Found new line in line {i + 1} (\\n). This may cause errors downstream. Escaping."
                 )
             line = line.replace("\n", "\\n")
         out_lines.append(line)
@@ -421,6 +421,12 @@ def get_langs(lp):
         "ru",
         "zh-CN",
         "zh",
+        "zh-cn",
+        "ja",
+        "hi",
+        "uk",
+        "cs",
+        "is",
     ]
     lang_pattern = "|".join(valid_langs)
     lp_pattern = rf"^({lang_pattern})-({lang_pattern})$"
