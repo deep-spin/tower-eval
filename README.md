@@ -155,6 +155,19 @@ The command will, for each model under `models`:
 Currently available metrics are:
 `vllm`, `open-ai`, `anthropic`, `vertex-ai`, and respective arguments (check [Models section](#ModelsSection)).
 
+
+In order to have a better idea about the generation speed, we keep track of the inference time and report it in an additional json file (i.e. `metadata.json`)  that lives next to the `generation.txt` output file.
+
+This information is stored in the following two additional fields:
+- `generation_time`: stores the list of inference times per line, or batch if you are running the inference in the batch mode.
+- `generation_time_average`: stores the average number of lines (or words or characters) generated per second.
+
+Currently we only support `lps` (i.e. `lines per second`), but in future we are going to add the possibility of reporting `wps`(i.e. `words per second`) and `cps` (i.e. `characters per second`).
+
+The averaging solution (`lps`, `wps`, or `cps`) can be configured by the `average_time_metric` variable in the config file. The defauls value for it is `lps`.
+
+***NOTE:*** The inference time is measured in seconds.
+
 You can find a sample config file of the generate task in `configs/examples/generate.yaml`.
 
 
