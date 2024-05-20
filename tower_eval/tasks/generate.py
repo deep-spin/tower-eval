@@ -4,7 +4,7 @@ from pathlib import Path
 from jsonargparse import CLI
 from loguru import logger
 from tower_eval.models import available_models
-from tower_eval.utils import make_dir_if_not_exists, parse_yaml_config, save_to_json, get_langs
+from tower_eval.utils import make_dir_if_not_exists, parse_yaml_config, save_to_json, get_langs, add_average_generation_time
 
 
 def parse_gen_eval_config(config_path: str) -> dict:
@@ -53,6 +53,7 @@ def generate(i: int, config_path: str, config_type: str) -> None:
     )
     data_dir = Path(configs.get("data_dir"))
     output_dir = Path(configs.get("output_dir"))
+    average_time_metric = configs.get("average_time_metric", "lps")
     tasks = configs.get("tasks")
     model = configs.get("models")[i]
     model_name = model.get("name")
@@ -65,30 +66,22 @@ def generate(i: int, config_path: str, config_type: str) -> None:
         subtasks = task.get("subtasks")
         for subtask, _ in subtasks.items():
             input_file = data_dir / task_name / subtask / "instructions.txt"
-            output_file = (
-                output_dir
-                / task_name
-                / subtask
-                / model_type
-                / model_name
-                / "generation.txt"
-            )
+            output_path = output_dir / task_name / subtask / model_type / model_name
+            output_file = (output_path / "generation.txt")
+            make_dir_if_not_exists(output_file)
+            metadata_file = output_path / "metadata.json"
             logger.opt(colors=True).info(
                 f"Running inference for task: <yellow> {task_name} </yellow>, subtask: <green> {subtask} </green> with model: <red> {model_type}/{model_name} </red> saving to: <red> {output_dir} </red>"
             )
-            make_dir_if_not_exists(output_file)
+
             if task_name in ["mt", "ape"]:
                 lp = subtask.split(".")[-1]
                 src_lang, tgt_lang = get_langs(lp)
 
                 model.source_language = src_lang
                 model.target_language = tgt_lang
-            model.generation_with_resume(input_file=input_file, output_file=output_file)
-            # save run metadata to the same path for better experiment tracking
-            save_to_json(
-                save_location=Path(output_file).parent / "metadata.json",
-                data=configs,
-            )
+            model.generation_with_resume(input_file=input_file, output_file=output_file, metadata=configs, metadata_file=metadata_file)
+            add_average_generation_time(output_file, metadata_file, language=tgt_lang, mode=average_time_metric)
     try:
         model.server.close_server()
     # in case model does not have a close server attribute (e.g., openAI)
