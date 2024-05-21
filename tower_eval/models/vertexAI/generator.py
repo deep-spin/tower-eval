@@ -8,6 +8,7 @@ from tower_eval.utils import generate_with_retries
 from tower_eval.models.vertexAI import API_TYPE
 from loguru import logger
 
+
 class VertexAI(Generator):
     """Google's Vertex AI Wrapper.
 
@@ -35,7 +36,7 @@ class VertexAI(Generator):
         retry_min_interval: int = 4,
         retry_multiplier: int = 1,
         run_async: bool = False,
-        **kwargs
+        **kwargs,
     ) -> None:
         super().__init__(**kwargs)
         self.run_async = run_async
@@ -55,7 +56,7 @@ class VertexAI(Generator):
                     "max_output_tokens": max_tokens,
                     "temperature": temperature,
                     "top_p": top_p,
-                    },
+                },
             }
         elif self.model_type == "palm":
             self.model = TextGenerationModel.from_pretrained(model)
@@ -67,7 +68,9 @@ class VertexAI(Generator):
                 "top_p": top_p,
             }
         else:
-            logger.opt(colors=True).info(f"<red>Model {model} is not supported by Vertex AI.</red>")
+            logger.opt(colors=True).info(
+                f"<red>Model {model} is not supported by Vertex AI.</red>"
+            )
             exit(1)
 
     def _generate(self, input_line: str) -> str:
@@ -96,11 +99,7 @@ class VertexAI(Generator):
         except Exception as e:
             raise GenerationException(str(e))
 
-
         return responses.text
-
-    def _batch_generate(self):
-        pass
 
     @staticmethod
     def model_name():

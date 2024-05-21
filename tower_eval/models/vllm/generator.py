@@ -58,7 +58,7 @@ class VLLM(Generator):
         )
 
     def _generate(self, input_line: str) -> str:
-        self._batch_generate([input_line])[0]
+        pass
 
     def _batch_generate(self, input_lines: List[str]) -> List[str]:
         model_output = self.model.generate(

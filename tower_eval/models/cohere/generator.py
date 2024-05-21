@@ -76,9 +76,6 @@ class Cohere(Generator):
         response = response.text
         return response
 
-    def _batch_generate(self):
-        pass
-
     @staticmethod
     def model_name():
         return "cohere"
