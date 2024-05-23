@@ -58,8 +58,16 @@ def similarity_retrieval(
     test_set: list[dict[str, str]],
     examples: list[dict[str, str]],
     n_shots: int,
+    similarity_ordering: str = "descending",
     **kwargs,
 ) -> list[list[dict[str, str]]]:
+    # determines whether most similar example will come out at the beginning of the prompt, at the end, or randomly
+    assert n_shots > 0, "n_shots should be greater than 0."
+    assert similarity_ordering in [
+        "ascending",
+        "descending",
+        "random",
+    ], "similarity_ordering should be either 'ascending' or 'descending', or 'random'."
     encoder = SentenceTransformer(
         "sentence-transformers/LaBSE",
         #   device="cpu"
@@ -71,12 +79,17 @@ def similarity_retrieval(
 
     selected_examples = []
     # i = 0
-    for test_setence in tqdm(test_set):
+    for row in tqdm(test_set):
         selected_examples_per_instance = []
         # get similar examples
-        idxs, dists = get_similar_examples(n_shots, encoder, index, test_setence["src"])
+        idxs, dists = get_similar_examples(n_shots, encoder, index, row["src"])
+        # by default, the most similar examples will be at the beginning of the prompt
         for idx in idxs:
             selected_examples_per_instance.append(examples[idx])
+        if similarity_ordering == "ascending":
+            selected_examples_per_instance = selected_examples_per_instance[::-1]
+        elif similarity_ordering == "random":
+            np.random.shuffle(selected_examples_per_instance)
         selected_examples.append(selected_examples_per_instance)
     return selected_examples
 

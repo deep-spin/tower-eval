@@ -435,7 +435,10 @@ def get_langs(lp):
     trg_lang = match.group(2)
     return src_lang, trg_lang
 
-def add_average_generation_time(input_file: str, metadata_file: str, language: str, mode: str = "lps"):
+
+def add_average_generation_time(
+    input_file: str, metadata_file: str, language: str, mode: str = "lps"
+):
     """
     Given the generation file, the metadata file and the mode it calculates the time to generate the outputs.
     Depending on the mode, it can be either the lines-per-second (lps) or words-per-second (wps)
@@ -454,7 +457,9 @@ def add_average_generation_time(input_file: str, metadata_file: str, language: s
             average_time = len(lines) / total_time
         # TODO: Add the support of wps mode
     else:
-        logger.error(f"The generation_time information doesn't exist in the {metadata_file}. We are going to set the average generation time to -1.")
+        logger.error(
+            f"The generation_time information doesn't exist in the {metadata_file}. We are going to set the average generation time to -1."
+        )
         average_time = -1
     metadata[f"generation_time_average ({mode})"] = average_time
     save_to_json(metadata_file, metadata)
