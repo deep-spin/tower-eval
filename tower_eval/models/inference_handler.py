@@ -9,18 +9,17 @@ from tower_eval.utils import (
     read_lines,
     write_lines,
     load_json_file,
-    save_to_json
+    save_to_json,
 )
 from tqdm import tqdm
+from typing import List, Tuple
 
 
 class Generator(ABC):
     """Abstract class defining a shared interface for all the generators (OpenAI models as well as our internal LLMs)"""
 
     def __init__(self, **kwargs) -> None:
-        self.server = None
-        self.run_async = True
-        self.batch_size = 16
+        self.batch_size = kwargs.get("batch_size", 1)
         self.strip = kwargs.get("strip", True)
 
     def generate(self, prompt: str, **kwargs):
@@ -30,14 +29,13 @@ class Generator(ABC):
         pass
 
     @abstractmethod
-    def _generate(self):
+    def _generate(self, prompt: str):
         """ """
         pass
 
-    @abstractmethod
-    def _batch_generate(self):
+    def _batch_generate(self, batch: List[str]):
         """ """
-        pass
+        return [self._generate(b) for b in batch]
 
     @staticmethod
     @abstractmethod
@@ -45,18 +43,14 @@ class Generator(ABC):
         """Model name to be called for inference."""
         pass
 
-    def generation_with_resume(
+    def assess_progress(
         self,
+        input_lines: List[str],
         output_file: str,
-        input_file: str,
         metadata: dict,
-        metadata_file: str
-    ):
-        """
-        Writes generated output to file, resuming from last line generated.
-        """
-        # Read all the input lines and store them in a list
-        input_lines = read_lines(input_file, unescape_newline=True)
+        metadata_file: str,
+    ) -> Tuple[List[str], List[str], dict, int, int]:
+        """ """
         total_lines = len(input_lines)
         if os.path.exists(output_file):
             processed_lines = read_lines(output_file, unescape_newline=True)
@@ -75,41 +69,63 @@ class Generator(ABC):
         ), f"MORE PROCESSED LINES ({num_processed_lines}) THAN INPUT LINES ({total_lines})!"
         # Skip the lines already processed
         input_lines = input_lines[num_processed_lines:]
+
+        return input_lines, processed_lines, metadata, num_processed_lines, total_lines
+
+    def generate_to_file(
+        self,
+        input_lines: List[str],
+        processed_lines: List[str],
+        num_processed_lines: int,
+        total_lines: int,
+        output_file: str,
+        metadata: dict,
+        metadata_file: str,
+    ):
         if self.strip:
             input_lines = [input_line.strip() for input_line in input_lines]
         else:
             input_lines = [input_line for input_line in input_lines]
         inference_batch_size = self.batch_size
-        if self.run_async:
-            # special batch_size case for vllm to pass all strings at once and let the model handle it
-            if self.batch_size == -1:
-                # handle the case where input lines is finished
-                inference_batch_size = max(len(input_lines), 1)
-            with tqdm(initial=num_processed_lines, total=total_lines) as pbar:
-                for batch_id in range(0, len(input_lines), inference_batch_size):
-                    batch = input_lines[batch_id : batch_id + inference_batch_size]
-                    start_time = time.time()
-                    responses = self._batch_generate(batch)
-                    end_time = time.time()
-                    metadata["generation_time"].append(end_time - start_time)
-
-                    for response_id, response in enumerate(responses):
-                        processed_lines.append(response.strip())
-                        # Calculate the number of responses processed so far
-                        step = batch_id * inference_batch_size + response_id
-                        log_response(response, step=step, lim=10)
-                    write_lines(output_file, processed_lines, escape_newline=True)
-                    save_to_json(metadata_file, metadata)
-                    pbar.update(len(batch))
-        else:
-            for i, input_line in enumerate(
-                tqdm(input_lines, initial=num_processed_lines, total=total_lines)
-            ):
+        # for vllm, handle the case where input lines is finished
+        if self.batch_size == -1:
+            inference_batch_size = max(len(input_lines), 1)
+        with tqdm(initial=num_processed_lines, total=total_lines) as pbar:
+            for batch_id in range(0, len(input_lines), inference_batch_size):
+                batch = input_lines[batch_id : batch_id + inference_batch_size]
                 start_time = time.time()
-                response = self._generate(input_line)
+                responses = self._batch_generate(batch)
                 end_time = time.time()
                 metadata["generation_time"].append(end_time - start_time)
-                processed_lines.append(response.strip())
+
+                for response_id, response in enumerate(responses):
+                    processed_lines.append(response.strip())
+                    # Calculate the number of responses processed so far
+                    step = batch_id * inference_batch_size + response_id
+                    log_response(response, step=step, lim=10)
                 write_lines(output_file, processed_lines, escape_newline=True)
                 save_to_json(metadata_file, metadata)
-                log_response(response, step=i, lim=10)
+                pbar.update(len(batch))
+
+    def generation_with_resume(
+        self, output_file: str, input_file: str, metadata: dict, metadata_file: str
+    ):
+        """
+        Writes generated output to file, resuming from last line generated.
+        """
+        # Read all the input lines and store them in a list
+        input_lines = read_lines(input_file, unescape_newline=True)
+        # update input lines, given the already processed lines; store this information
+        input_lines, processed_lines, metadata, num_processed_lines, total_lines = (
+            self.assess_progress(input_lines, output_file, metadata, metadata_file)
+        )
+        # perform the generation to a file
+        self.generate_to_file(
+            input_lines,
+            processed_lines,
+            num_processed_lines,
+            total_lines,
+            output_file,
+            metadata,
+            metadata_file,
+        )

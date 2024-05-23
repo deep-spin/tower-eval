@@ -73,13 +73,8 @@ class Anthropic(Generator):
             retry_max_interval=self.retry_max_interval,
         )
 
-        response = response.content[0].text.split("\n\n")[
-            -1
-        ]  # hacky way to remove the agent's preamble in the response
+        response = response.content[0].text
         return response
-
-    def _batch_generate(self):
-        pass
 
     @staticmethod
     def model_name():

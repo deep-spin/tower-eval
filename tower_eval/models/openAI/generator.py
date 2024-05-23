@@ -114,7 +114,7 @@ class OpenAI(Generator):
             )
         except Exception as e:
             if type(e) == InvalidRequestError:
-                self._handle_excessive_tokens_error(e, prompt)
+                response = self._handle_excessive_tokens_error(e, prompt)
             else:
                 raise GenerationException(str(e))
 
@@ -144,8 +144,7 @@ class OpenAI(Generator):
         logger.warning(f"Restoring max tokens to {old_max_tokens}.")
         self.openai_args["max_tokens"] = old_max_tokens
 
-    def _batch_generate(self):
-        pass
+        return response
 
     @staticmethod
     def model_name():
