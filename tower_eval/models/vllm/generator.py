@@ -1,12 +1,8 @@
-import gc
-import time
 from typing import List
 
-import torch
 from loguru import logger
 from tower_eval.models.inference_handler import Generator
 from vllm import LLM, SamplingParams
-from vllm.model_executor.parallel_utils.parallel_state import destroy_model_parallel
 
 
 class VLLM(Generator):
