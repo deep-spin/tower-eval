@@ -21,6 +21,8 @@ class Generator(ABC):
     def __init__(self, **kwargs) -> None:
         self.batch_size = kwargs.get("batch_size", 1)
         self.strip = kwargs.get("strip", True)
+        self.use_chat_template = kwargs.get("use_chat_template", False)
+        self.system_prompt = kwargs.get("system_prompt", None)
 
     def generate(self, prompt: str, **kwargs):
         """
@@ -72,6 +74,27 @@ class Generator(ABC):
 
         return input_lines, processed_lines, metadata, num_processed_lines, total_lines
 
+    def apply_chat_template(self, input_line: str) -> str:
+        return input_line
+
+    def preprocess_lines(self, input_lines: List[str]) -> List[str]:
+        """ """
+        if self.strip:
+            input_lines = [input_line.strip() for input_line in input_lines]
+        else:
+            input_lines = [input_line for input_line in input_lines]
+        if self.use_chat_template:
+            if self.model_name() == "vllm":
+                logger.warning("Applying chat template to loaded instructions.")
+            else:
+                logger.warning(
+                    "Applying chat templte on the fly is only supported by vllm models; the flag is ignored if the model is not vllm."
+                )
+            input_lines = [
+                self.apply_chat_template(input_line) for input_line in input_lines
+            ]
+        return input_lines
+
     def generate_to_file(
         self,
         input_lines: List[str],
@@ -82,10 +105,7 @@ class Generator(ABC):
         metadata: dict,
         metadata_file: str,
     ):
-        if self.strip:
-            input_lines = [input_line.strip() for input_line in input_lines]
-        else:
-            input_lines = [input_line for input_line in input_lines]
+        input_lines = self.preprocess_lines(input_lines)
         inference_batch_size = self.batch_size
         # for vllm, handle the case where input lines is finished
         if self.batch_size == -1:

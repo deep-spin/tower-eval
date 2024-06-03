@@ -63,6 +63,19 @@ class VLLM(Generator):
         generations = [output.outputs[0].text for output in model_output]
         return generations
 
+    def apply_chat_template(self, input_line: str) -> str:
+        tokenizer = self.model.get_tokenizer()
+        if self.system_prompt is not None:
+            messages = [{"role": "system", "content": self.system_prompt}]
+        else:
+            messages = []
+        messages.append({"role": "user", "content": input_line})
+        input_line = tokenizer.apply_chat_template(
+            messages, add_generation_prompt=True, tokenize=False
+        )
+        breakpoint()
+        return input_line
+
     @staticmethod
     def model_name():
         return "vllm"
