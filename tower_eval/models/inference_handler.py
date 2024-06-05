@@ -87,9 +87,7 @@ class Generator(ABC):
             if self.model_name() == "vllm":
                 logger.warning("Applying chat template to loaded instructions.")
             else:
-                logger.warning(
-                    "Applying chat templte on the fly is only supported by vllm models; the flag is ignored if the model is not vllm."
-                )
+                raise NotImplementedError, "Applying chat templte on the fly is only supported by vllm models; please set the use_chat_template flag to False."
             input_lines = [
                 self.apply_chat_template(input_line) for input_line in input_lines
             ]
