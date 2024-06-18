@@ -44,6 +44,7 @@ python-dotenv = "^1.0.0"
 bleurt-pytorch = {git = "https://github.com/lucadiliello/bleurt-pytorch.git"}
 google-cloud-aiplatform = "^1.40.0"
 lm_eval = {git = "https://github.com/EleutherAI/lm-evaluation-harness.git"}
+metricx = {git = "https://github.com/ricardorei/metricx.git"}
 datasets = "^2.14.6"
 anthropic = "^0.17.0"
 vllm = "^0.4.0.post1"

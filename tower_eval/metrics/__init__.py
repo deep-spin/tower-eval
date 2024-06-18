@@ -19,6 +19,7 @@ from tower_eval.metrics.perplexity.metric import Perplexity
 from tower_eval.metrics.spearman.metric import SPEARMAN
 from tower_eval.metrics.ter.metric import TER
 from tower_eval.metrics.xcomet.metric import XCOMET
+from tower_eval.metrics.metricx.metric  import MetricX
 
 __all__ = [
     TER,
@@ -38,6 +39,7 @@ __all__ = [
     ErrorSpanDetectionRecall,
     ErrorSpanDetectionPrecision,
     Perplexity,
+    MetricX,
 ]
 
 
