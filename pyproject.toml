@@ -47,8 +47,9 @@ lm_eval = {git = "https://github.com/EleutherAI/lm-evaluation-harness.git"}
 metricx = {git = "https://github.com/ricardorei/metricx.git"}
 datasets = "^2.14.6"
 anthropic = "^0.17.0"
-vllm = "^0.4.0.post1"
+vllm = "0.4.0.post1"
 cohere = "^5.2.2"
+setuptools = "69.5.1"
 
 [tool.poetry.dev-dependencies]
 mock = ">=3.0.5,<4.0.0"
