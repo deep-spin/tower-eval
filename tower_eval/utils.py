@@ -1,3 +1,5 @@
+import argparse
+import ast
 import json
 import os
 import re
@@ -7,12 +9,11 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Union
 
 import numpy as np
-import pandas as pd
 import spacy
 import tqdm
 import yaml
 from loguru import logger
-from mosestokenizer import MosesDetokenizer, MosesTokenizer
+from mosestokenizer import MosesDetokenizer
 from nltk.tokenize.treebank import TreebankWordDetokenizer
 from tenacity import Retrying, stop_after_attempt, wait_random_exponential
 
@@ -463,3 +464,15 @@ def add_average_generation_time(
         average_time = -1
     metadata[f"generation_time_average ({mode})"] = average_time
     save_to_json(metadata_file, metadata)
+
+
+def parse_dict_arg(arg):
+    try:
+        # Safely evaluate the string as a Python expression
+        parsed = ast.literal_eval(arg)
+        if isinstance(parsed, dict):
+            return parsed
+        else:
+            raise argparse.ArgumentTypeError("Argument is not a valid dictionary")
+    except (ValueError, SyntaxError):
+        raise argparse.ArgumentTypeError("Argument is not a valid dictionary")

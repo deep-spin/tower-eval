@@ -20,13 +20,10 @@ from pathlib import Path
 import numpy as np
 from loguru import logger
 
-from tower_eval.metrics import available_metrics
-from tower_eval.metrics.comet import DEFAULT_COMET_MODEL
 from tower_eval.models import available_models
 from tower_eval.tasks.evaluate import run_metric
 from tower_eval.tasks.index import index_data
 from tower_eval.tasks.prepare import prepare_data
-from tower_eval.tools.logging import wandb_utils
 from tower_eval.utils import (
     combine_metrics_args,
     get_eval_args_given_task,
@@ -34,6 +31,7 @@ from tower_eval.utils import (
     make_dir_if_not_exists,
     parse_yaml_config,
     save_to_json,
+    parse_dict_arg,
 )
 
 
@@ -104,11 +102,7 @@ def run_harness_evaluations(configs: dict):
                 )
 
 
-def run_evaluations(configs: dict, wandb_project_name: str = None) -> dict:
-    if wandb_project_name is not None:
-        logger.opt(colors=True).info(
-            f"<green>Logging</green> results in WandB project: <green>{wandb_project_name}</green>"
-        )
+def run_evaluations(configs: dict) -> dict:
     all_scores = defaultdict(lambda: defaultdict(dict))
     logger.remove()
     logger.add(
@@ -179,32 +173,6 @@ def run_evaluations(configs: dict, wandb_project_name: str = None) -> dict:
                         metric_name=task_metric, eval_args=eval_args
                     )
                     subtask_results.update(metric_score)
-                    if wandb_project_name is not None:
-                        (
-                            model,
-                            model_type,
-                            task,
-                            shot_setting,
-                            subtask,
-                            dataset_name,
-                            lp_xor_language,
-                            model_name_and_setting,
-                            shot_name_short,
-                        ) = wandb_utils.create_wandb_names_from_path(output_path)
-                        wandb_utils.log_one_entry(
-                            project=wandb_project_name,
-                            model_name_and_setting=model_name_and_setting,
-                            shot_name_short=shot_name_short,
-                            task=task,
-                            subtask=subtask,
-                            dataset_name=dataset_name,
-                            lp_xor_language=lp_xor_language,
-                            metric=task_metric,
-                            score=metric_score[task_metric],
-                            model_type=model_type,
-                            model=model_name,
-                            shot_setting=shot_setting,
-                        )
                 if Path(output_path).exists():
                     existing_results = json.load(open(output_path, "r"))
                     subtask_results.update(existing_results)
@@ -363,27 +331,16 @@ def command_selector(args):
         # NOTE: Overwriting the parameters of the config file by the values provided via commandline is not supported
         if args.config:
             config_args = parse_yaml_config(args.config)
-            scores = run_evaluations(
-                config_args, wandb_project_name=args.wandb_project_name
-            )
-            # Store the scores of all the tasks and their corresponding metrics in a json file (default: stdout)
-            logger.opt(colors=True).info(f"Evaluations finished. Saving the results.")
-            args.scores_output_file.write(json.dumps(scores, indent=4) + "\n")
+            scores = run_evaluations(config_args)
         else:
-            output_path = os.path.join(
-                args.output_dir,
-                args.task,
-                args.subtask,
-                args.model_type,
-                args.model_name,
-                "evaluation.json",
+            eval_args = args.eval_args
+            output_path = args.output_dir / "evaluation.json"
+            eval_args["gold_data_path"] = args.raw_data_path
+            eval_args["hypothesis_path"] = args.generations_path
+            metric_scores = run_metric(
+                metric_name=args.metric, eval_args=args.eval_args
             )
-            metric_scores = {}
-            for metric in args.metrics:
-                metric_scores.update(
-                    run_metric(metric_name=metric, eval_args=vars(args))
-                )
-                save_to_json(save_location=output_path, data=metric_scores)
+            save_to_json(save_location=output_path, data=metric_scores)
     elif args.command == "index":
         if args.config:
             config_args = parse_yaml_config(args.config)
@@ -398,21 +355,8 @@ def command_selector(args):
             config_args = parse_yaml_config(args.config)
             run_generations(config_args, args.config, config_type="generate")
         else:
-            output_file = os.path.join(
-                args.output_dir,
-                args.task,
-                args.subtask,
-                args.model_type,
-                args.model_name,
-                "generation.txt",
-            )
-            model = available_models[args.model_type](**vars(args))
-            make_dir_if_not_exists(output_file)
-            logger.opt(colors=True).info(
-                f"Running inference for task: <yellow> {args.task} </yellow>, subtask: <green> {args.subtask} </green> with model: <red> {args.model_type}/{args.model_name} </red> saving to: <red> {args.output_dir} </red>"
-            )
-            model.generation_with_resume(
-                input_file=args.source, output_file=output_file
+            raise ValueError(
+                "ERROR: You need to provide a config file to run the generation."
             )
 
     elif args.command == "gen-eval":
@@ -446,9 +390,8 @@ def command_selector(args):
                 if step == "eval":
                     model_dict["hypothesis_dir"] = config_args["gen_output_dir"]
                 configs[step]["models"].append(model_dict)
-        wandb_project_name = args.wandb_project_name
         run_generations(configs["gen"], args.config, config_type="gen-eval")
-        run_evaluations(configs["eval"], wandb_project_name=wandb_project_name)
+        run_evaluations(configs["eval"])
 
     elif args.command == "lm_eval":
         if args.config:
@@ -481,202 +424,35 @@ if __name__ == "__main__":
         "NOTE: Overwriting the parameters of the config file by the values provided via commandline is NOT supported",
     )
     parser.add_argument(
-        "--log-wandb",
-        action="store_true",
-        required=False,
-        help="Set to True if you want to have the results logged by WandB.",
-    )
-    parser.add_argument(
-        "--wandb-project-name",
-        type=str,
-        default=None,
-        required=False,
-        help="The name of the WandB project to store the evaluation results",
-    )
-    parser.add_argument(
-        "--scores-output-file",
-        "-o",
-        type=argparse.FileType("w"),
-        default=sys.stdout,
-        required=False,
-        help="Path to the output json file to store the results of all the tasks.",
-    )
-    parser.add_argument(
         "--output_dir", "-od", type=Path, default=None, help="Output directory."
     )
     parser.add_argument(
-        "--task",
-        "-t",
-        type=str,
+        "--raw_data_path",
+        "-rdp",
+        type=Path,
         default=None,
+        help="Path to raw data jsonl file.",
     )
     parser.add_argument(
-        "--subtask",
-        "-st",
-        type=str,
+        "--generations_path",
+        "-gp",
+        type=Path,
         default=None,
+        help="Path to generations txt file (1 generation per file).",
     )
     parser.add_argument(
-        "--hypothesis",
-        "-hyp",
-        type=Path,
-        required=False,
-        help="Path to the hypotheses file.",
-    )
-    parser.add_argument(
-        "--references",
-        "-ref",
-        type=Path,
-        nargs="+",
-        required=False,
-        help="Path to the reference file.",
-    )
-    parser.add_argument(
-        "--source",
-        "-src",
-        type=Path,
-        required=False,
-        help="Path to the source file.",
-    )
-    parser.add_argument(
-        "--language",
-        "-l",
-        type=str,
-        required=False,
-        default="en",
-        help="The language of the hypotheses",
-    )
-    parser.add_argument(
-        "--metrics",
+        "--metric",
         "-m",
-        nargs="+",
-        choices=[m.metric_name() for m in available_metrics.values()].__add__(["all"]),
-        required=False,
-        help="Metric to use for evaluating the hypothesis.",
+        type=str,
+        default=None,
+        help="Metric to use for evaluating the generation.",
     )
     parser.add_argument(
-        "--tokenizer",
-        required=False,
+        "--eval_args",
+        "-ea",
+        type=parse_dict_arg,
         default=None,
-        choices=[None, "zh", "13a", "char", "intl", "ja-mecab", "ko-mecab"],
-        help="The tokenizer to apply to the hypotheses and the reference before sending to evaluation.",
-    )
-    parser.add_argument(
-        "--lowercase",
-        required=False,
-        default=False,
-        action="store_true",
-        help="If True, enables case-insensitivity in sacrebleu metrics (chrF, BLEU).",
-    )
-    chrf_args = parser.add_argument_group("ChrF related arguments")
-    chrf_args.add_argument(
-        "--whitespace",
-        action="store_true",
-        default=False,
-        help="Include whitespaces when extracting character n-grams. (Default: %(default)s)",
-    )
-
-    ter_args = parser.add_argument_group("TER related arguments")
-    ter_args.add_argument(
-        "--case-sensitive",
-        action="store_true",
-        help="Enables case sensitivity. (Default: %(default)s)",
-    )
-    ter_args.add_argument(
-        "--asian-support",
-        action="store_true",
-        help="Enables special treatment of Asian characters. (Default: %(default)s)",
-    )
-    ter_args.add_argument(
-        "--no-punct",
-        action="store_true",
-        help="Removes punctuation. (Default: %(default)s)",
-    )
-    ter_args.add_argument(
-        "--normalized",
-        action="store_true",
-        help="Applies basic normalization and tokenization. (Default: %(default)s)",
-    )
-    comet_args = parser.add_argument_group("COMET related arguments")
-    comet_args.add_argument("--batch-size", type=int, default=16)
-    comet_args.add_argument("--gpus", type=int, default=1)
-    comet_args.add_argument(
-        "--comet_model",
-        type=str,
-        required=False,
-        default=DEFAULT_COMET_MODEL,
-        help="COMET model to be used.",
-    )
-    errant_args = parser.add_argument_group("ERRANT related arguments")
-    errant_args.add_argument(
-        "--tokenize-source",
-        action="store_true",
-        help="Tokenize the original source file. (Default: %(default)s)",
-    )
-    errant_args.add_argument(
-        "--tokenize-hypothesis",
-        action="store_true",
-        help="Tokenize the hypothesis file. (Default: %(default)s)",
-    )
-    error_span_detection_args = parser.add_argument_group(
-        "Error Span Detection related arguments"
-    )
-    error_span_detection_args.add_argument(
-        "--severity-mismatch-penalty",
-        type=float,
-        default=0.5,
-        help="Penalty for severity mismatch. (Default: %(default)s)",
-    )
-    error_span_detection_args.add_argument(
-        "--hyp_type",
-        type=str,
-        default="jsonl",
-        choices=["jsonl", "tag", "det"],
-        help="Hypothesis file format. (Default: %(default)s)",
-    )
-    # model args for generation
-    parser.add_argument(
-        "--model_type",
-        type=str,
-        default=None,
-        help="Type of the model to use for inference.",
-    )
-    parser.add_argument(
-        "--model_name",
-        type=str,
-        default=None,
-        help="Type of the model to use for inference.",
-    )
-    model_args = parser.add_argument_group("Model inference-related arguments")
-    model_args.add_argument(
-        "--api_base",
-        type=str,
-        default=None,
-        help="Server address of the model to use for inference.",
-    )
-    model_args.add_argument(
-        "--openai_model",
-        type=str,
-        default=None,
-        choices=["gpt-3.5-turbo", "gpt-4"],
-        help="Specific model to be used (open-ai).",
-    )
-    model_args.add_argument(
-        "--max_tokens",
-        type=int,
-        default=256,
-        help="Maximum number of new tokens to generate. (Default: %(default)s)",
+        help="Evaluation arguments dictionary.",
     )
     args = parser.parse_args()
-    if (
-        args.command in ["evaluate", "gen-eval"]
-        and args.log_wandb
-        and args.wandb_project_name is None
-    ):
-        parser.error(
-            "--wandb-project-name is mandatory for logging the results in wandb.\n"
-            "So, either provide the wandb-project-name or remove the --log-wandb option.\n"
-            "NOTE: in the latter case, the results will not be logged in wandb."
-        )
-
     command_selector(args)
