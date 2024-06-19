@@ -1,12 +1,14 @@
-from tower_eval.metrics import available_metrics
+from tower_eval.metrics.metrics_handler import Metric
 
 
-def run_metric(
-    metric_name: str,
-    eval_args: dict,
+def run_instantiated_metric(
+    metric: Metric,
+    hypothesis_path,
+    gold_data_path,
 ):
     """ """
-    metric = available_metrics[metric_name](**(eval_args))
-    metric_score = metric.run()
+    metric_score = metric.run(
+        hypothesis_path=hypothesis_path, gold_data_path=gold_data_path
+    )
 
     return metric_score

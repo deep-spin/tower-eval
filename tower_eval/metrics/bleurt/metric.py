@@ -5,10 +5,11 @@ from bleurt_pytorch import (
     BleurtForSequenceClassification,
     BleurtTokenizer,
 )
+from tqdm import tqdm
+
 from tower_eval.metrics.bleurt.result import BLEURTResult
 from tower_eval.metrics.metrics_handler import Metric
 from tower_eval.metrics.result_handler import MetricResult
-from tqdm import tqdm
 
 
 class BLEURT(Metric):
@@ -23,10 +24,8 @@ class BLEURT(Metric):
         self.model.eval()
         self.model = self.model.to("cuda")
 
-    def run(self) -> dict:
-        hypotheses, gold_data = self._handle_inputs(
-            self.hypothesis_path, self.gold_data_path
-        )
+    def run(self, hypothesis_path, gold_data_path) -> dict:
+        hypotheses, gold_data = self._handle_inputs(hypothesis_path, gold_data_path)
         references = gold_data["ref"]
         result = self.evaluate(hypotheses, references)
         result.print_result(self.metric_name())

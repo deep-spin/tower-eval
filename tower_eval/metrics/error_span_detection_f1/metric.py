@@ -13,13 +13,12 @@ class ErrorSpanDetectionF1(ErrorSpanDetectionMetric):
         )
         self.hyp_type = kwargs.get("hyp_type", "jsonl")
 
-    def run(self):
-        hypothesis_list, reference_list = self._handle_inputs(
-            self.hypothesis_path, self.gold_data_path
-        )
+    def run(self, hypothesis_path, gold_data_path) -> dict:
+        hypotheses, gold_data = self._handle_inputs(hypothesis_path, gold_data_path)
+        reference_list = gold_data["ref"]
         result = ErrorSpanDetectionResult(
             self.evaluate(
-                hypothesis_list,
+                hypotheses,
                 reference_list,
             )["f1"]
         )

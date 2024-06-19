@@ -3,6 +3,7 @@ from typing import List
 
 from loguru import logger
 from sklearn.metrics import accuracy_score
+
 from tower_eval.metrics.accuracy.result import AccuracyResult
 from tower_eval.metrics.metrics_handler import Metric
 from tower_eval.metrics.result_handler import MetricResult
@@ -43,21 +44,14 @@ class ACCURACY(Metric):
         self.source_type = source_type
         self.source_labels = source_labels
 
-    def run(self) -> dict:
-        """Runs the Accuracy metric.
-
-        Returns:
-            dict: A dictionary containing the Accuracy score.
-        """
-        hypothesis_lines, gold_data = self._handle_inputs(
-            self.hypothesis_path, self.gold_data_path
-        )
+    def run(self, hypothesis_path, gold_data_path) -> dict:
+        hypotheses, gold_data = self._handle_inputs(hypothesis_path, gold_data_path)
         reference_lines = gold_data["ref"]
         gold_labels = []
         predicted_labels = []
         is_random_count = 0
         # if hypothesis is already numbered
-        for ref_line, hyp_line in zip(reference_lines, hypothesis_lines):
+        for ref_line, hyp_line in zip(reference_lines, hypotheses):
             # reference is always assumed to be in categorical format; i.e., [0,1,2,3,...]
             gold_labels.append(text_to_label(ref_line, "categorical"))
             label, is_random = text_to_label(

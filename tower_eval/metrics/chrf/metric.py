@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from sacrebleu.metrics import CHRF as SacreCHRF
+
 from tower_eval.metrics.chrf.result import CHRFResult
 from tower_eval.metrics.metrics_handler import Metric
 from tower_eval.metrics.result_handler import MetricResult
@@ -11,10 +12,8 @@ class CHRF(Metric):
         super().__init__(**kwargs)
         self.lowercase = kwargs.get("lowercase", lowercase)
 
-    def run(self) -> dict:
-        hypotheses, gold_data = self._handle_inputs(
-            self.hypothesis_path, self.gold_data_path
-        )
+    def run(self, hypothesis_path, gold_data_path) -> dict:
+        hypotheses, gold_data = self._handle_inputs(hypothesis_path, gold_data_path)
         references = gold_data["ref"]
         result = self.evaluate(hypotheses, references, lowercase=self.lowercase)
         result.print_result(self.metric_name())
