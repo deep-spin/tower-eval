@@ -1,18 +1,19 @@
 import os
 import time
 from abc import ABC, abstractmethod
+from typing import List, Tuple
 
 from loguru import logger
+from tqdm import tqdm
+
 from tower_eval.utils import (
     get_num_processed_lines,
+    load_json_file,
     log_response,
     read_lines,
-    write_lines,
-    load_json_file,
     save_to_json,
+    write_lines,
 )
-from tqdm import tqdm
-from typing import List, Tuple
 
 
 class Generator(ABC):
@@ -87,7 +88,9 @@ class Generator(ABC):
             if self.model_name() == "vllm":
                 logger.warning("Applying chat template to loaded instructions.")
             else:
-                raise NotImplementedError, "Applying chat templte on the fly is only supported by vllm models; please set the use_chat_template flag to False."
+                raise NotImplementedError(
+                    "Applying chat template on the fly is only supported by vllm models; please set the use_chat_template flag to False."
+                )
             input_lines = [
                 self.apply_chat_template(input_line) for input_line in input_lines
             ]
