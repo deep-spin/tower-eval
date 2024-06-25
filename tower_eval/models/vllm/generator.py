@@ -1,8 +1,9 @@
 from typing import List
 
 from loguru import logger
-from tower_eval.models.inference_handler import Generator
 from vllm import LLM, SamplingParams
+
+from tower_eval.models.inference_handler import Generator
 
 
 class VLLM(Generator):

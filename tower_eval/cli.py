@@ -22,6 +22,7 @@ from loguru import logger
 
 from tower_eval.metrics import available_metrics
 from tower_eval.tasks.evaluate import run_instantiated_metric
+from tower_eval.tasks.generate import simple_generate
 from tower_eval.tasks.index import index_data
 from tower_eval.tasks.prepare import prepare_data
 from tower_eval.utils import (
@@ -374,8 +375,13 @@ def command_selector(args):
             config_args = parse_yaml_config(args.config)
             run_generations(config_args, args.config, config_type="generate")
         else:
-            raise ValueError(
-                "ERROR: You need to provide a config file to run the generation."
+            simple_generate(
+                args.input_paths,
+                args.output_paths,
+                args.model_path,
+                args.model_type,
+                args.model_args,
+                args.metadata_file_paths,
             )
 
     elif args.command == "gen-eval":
@@ -426,6 +432,7 @@ if __name__ == "__main__":
         description="Calculates the scores of the given hypothesis for the given task",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
+    # CONFIG CLI ARGS
     parser.add_argument(
         "command",
         choices=["index", "prepare", "evaluate", "generate", "gen-eval", "lm_eval"],
@@ -442,6 +449,52 @@ if __name__ == "__main__":
         help="Path to the yaml file to read all the necessary information from."
         "NOTE: Overwriting the parameters of the config file by the values provided via commandline is NOT supported",
     )
+    # GENERATE CLI ARGS
+    parser.add_argument(
+        "--input_paths",
+        "-ip",
+        type=Path,
+        nargs="+",
+        default=None,
+        help="Path to the input file.",
+    )
+    parser.add_argument(
+        "--output_paths",
+        "-op",
+        type=Path,
+        nargs="+",
+        default=None,
+        help="Path to the output file.",
+    )
+    parser.add_argument(
+        "--model_path",
+        "-mp",
+        type=str,
+        default=None,
+        help="Path to the model to use for generation.",
+    )
+    parser.add_argument(
+        "--model_type",
+        "-mt",
+        type=str,
+        default=None,
+        help="Type of the model to use for generation.",
+    )
+    parser.add_argument(
+        "--model_args",
+        "-ma",
+        type=parse_dict_arg,
+        default=None,
+        help="Model arguments dictionary.",
+    )
+    parser.add_argument(
+        "--metadata_file_paths",
+        "-mfp",
+        type=Path,
+        nargs="+",
+        default=None,
+    )
+    # EVALUATE CLI ARGS
     parser.add_argument(
         "--output_dirs",
         "-od",
