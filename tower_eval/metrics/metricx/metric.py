@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
-import tempfile
-
 import torch
 from datasets import Dataset
-from loguru import logger
 from metricx23 import models
 from transformers import AutoTokenizer, Trainer, TrainingArguments
 
@@ -11,7 +8,10 @@ from tower_eval.metrics.metrics_handler import Metric
 from tower_eval.metrics.metricx.result import MetricXResult
 from tower_eval.metrics.result_handler import MetricResult
 
+from transformers import AutoTokenizer
+
 if torch.cuda.is_available():
+    # This refers to the first visible GPU
     DEVICE = torch.device("cuda")
 else:
     DEVICE = torch.device("cpu")
@@ -89,24 +89,13 @@ class MetricX(Metric):
             device=DEVICE,
             output_all_columns=True,
         )
-        output_dir = tempfile.mkdtemp()
-
-        logger.info(
-            "Created temporary folder to store MetricX predictions: {}.".format(
-                output_dir
-            )
-        )
-        training_args = TrainingArguments(
-            output_dir=output_dir,
-            per_device_eval_batch_size=1,
-            dataloader_pin_memory=False,
-        )
-        trainer = Trainer(
-            model=self.model,
-            args=training_args,
-        )
-        predictions, _, _ = trainer.predict(test_dataset=ds)
-        predictions = predictions.tolist()
+        with torch.no_grad():
+            predictions = [
+                self.model(
+                    sample["input_ids"], sample["attention_mask"]
+                ).predictions.item()
+                for sample in ds.iter(batch_size=1)
+            ]
         metricx_result = MetricXResult(
             {
                 "system_score": sum(predictions) / len(predictions),
