@@ -21,8 +21,8 @@ class ERRANT(Metric):
             "tokenize_hypothesis", tokenize_hypothesis
         )
 
-    def run(self) -> dict:
-        self.preprocess()
+    def run(self, hypothesis_path, gold_data_path) -> dict:
+        self.preprocess(hypothesis_path, gold_data_path)
         result = self.evaluate()
         result.print_result(self.metric_name())
         return result.format_result(self.metric_name())
@@ -50,10 +50,8 @@ class ERRANT(Metric):
         result = ERRANTResult(output_dict["F0.5"])
         return result
 
-    def preprocess(self):
-        hyp_lines, gold_data = self._handle_inputs(
-            self.hypothesis_path, self.gold_data_path
-        )
+    def preprocess(self, hypothesis_path, gold_data_path):
+        hyp_lines, gold_data = self._handle_inputs(hypothesis_path, gold_data_path)
         src_lines = gold_data["src"]
 
         if self.tokenize_source:

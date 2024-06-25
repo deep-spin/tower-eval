@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
-import io
-import warnings
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from tower_eval.metrics.exceptions import MetricInputException
 from tower_eval.metrics.result_handler import MetricResult
 from tower_eval.utils import list_to_dict, load_jsonl_file, read_lines
 
@@ -13,10 +10,9 @@ class Metric(ABC):
     """Abstract class defining a shared interface for all the Metrics"""
 
     def __init__(self, **kwargs) -> None:
-        self.hypothesis_path = kwargs.get("hypothesis_path")
-        self.gold_data_path = kwargs.get("gold_data_path")
+        self.kwargs = kwargs
 
-    def run(self, hypotheses: list, references: list, **kwargs):
+    def run(self, hypothesis_path: Path = None, references_path: Path = None, **kwargs):
         """
         The runner function that performs all the necessary checks on the files,
         applies the needed preprocessing (like lowercasing, tokenization, etc),

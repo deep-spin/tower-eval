@@ -4,6 +4,8 @@ import re
 from typing import List, Literal
 
 from loguru import logger
+from tqdm import tqdm
+
 from tower_eval.metrics.f1_sequence import conlleval
 from tower_eval.metrics.f1_sequence.result import F1SequenceResult
 from tower_eval.metrics.metrics_handler import Metric
@@ -16,7 +18,6 @@ from tower_eval.utils import (
     read_lines,
     tokenize_spacy,
 )
-from tqdm import tqdm
 
 
 class F1SEQUENCE(Metric):
@@ -42,9 +43,9 @@ class F1SEQUENCE(Metric):
         # Having self.valid_ner_tags set to None means all tags produced by the model are acceptable.
         self.valid_ner_tags = kwargs.get("valid_ner_tags")
 
-    def run(self) -> dict:
+    def run(self, hypothesis_path, gold_data_path) -> dict:
         hypothesis = self._load_samples(
-            self.hypothesis_path,
+            hypothesis_path,
             format=self.hypothesis_format,
             tokenize=self.tokenize_hypothesis,
         )
@@ -52,7 +53,7 @@ class F1SEQUENCE(Metric):
             hypothesis, self.valid_ner_tags, self.default_noent_tag
         )
         reference = self._load_samples(
-            self.gold_data_path, format=self.reference_format, tokenize=False
+            gold_data_path, format=self.reference_format, tokenize=False
         )
         reference = self.filter_tags(
             reference, self.valid_ner_tags, self.default_noent_tag

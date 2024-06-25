@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from comet import download_model, load_from_checkpoint
+
 from tower_eval.metrics.comet import DEFAULT_COMET_MODEL
 from tower_eval.metrics.comet.result import COMETResult
 from tower_eval.metrics.metrics_handler import Metric
@@ -25,10 +26,8 @@ class COMET(Metric):
         self.model = load_from_checkpoint(model_path)
         self.model.eval()
 
-    def run(self) -> dict:
-        hypotheses, gold_data = self._handle_inputs(
-            self.hypothesis_path, self.gold_data_path
-        )
+    def run(self, hypothesis_path, gold_data_path) -> dict:
+        hypotheses, gold_data = self._handle_inputs(hypothesis_path, gold_data_path)
         references, sources = gold_data["ref"], gold_data["src"]
         result = self.evaluate(hypotheses, references, sources)
         result.print_result(self.metric_name())

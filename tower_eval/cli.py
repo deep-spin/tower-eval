@@ -20,18 +20,18 @@ from pathlib import Path
 import numpy as np
 from loguru import logger
 
-from tower_eval.models import available_models
-from tower_eval.tasks.evaluate import run_metric
+from tower_eval.metrics import available_metrics
+from tower_eval.tasks.evaluate import run_instantiated_metric
+from tower_eval.tasks.generate import simple_generate
 from tower_eval.tasks.index import index_data
 from tower_eval.tasks.prepare import prepare_data
 from tower_eval.utils import (
     combine_metrics_args,
     get_eval_args_given_task,
     handle_subprocess,
-    make_dir_if_not_exists,
+    parse_dict_arg,
     parse_yaml_config,
     save_to_json,
-    parse_dict_arg,
 )
 
 
@@ -121,31 +121,34 @@ def run_evaluations(configs: dict) -> dict:
             task_name = task.get("name")
             subtasks = task.get("subtasks")
             task_metrics = task.get("metrics")
-            for subtask, subtask_args in subtasks.items():
-                subtask_results = {}
-                # Subtasks can overwrite/add some arguments to the metric argument defined on the task level
-                # For example, we should be able to define a specific tokenizer for Chinese only
-                if subtask_args is None:
-                    subtask_args = {}
-                subtask_metrics = (
-                    subtask_args.get("metrics", {}) if subtask_args is not None else {}
-                )
-                output_path = (
-                    output_dir
-                    / task_name
-                    / subtask
-                    / model["type"]
-                    / model["name"]
-                    / "evaluation.json"
-                )
-                dataset_name, language = subtask.split(".")
-                for task_metric, task_metric_args in task_metrics.items():
+            for task_metric, task_metric_args in task_metrics.items():
+                # Use empty dictionary if the arguments is None.
+                # This is done to be able to use update function later on.
+                task_metric_args = {} if task_metric_args is None else task_metric_args
+                instantiated_metric = available_metrics[task_metric](**task_metric_args)
+                reinstantiate_metric = False
+                for subtask, subtask_args in subtasks.items():
                     logger.opt(colors=True).info(
                         f"Evaluating the results of model <green> {model_name} </green> on task: <yellow> {task_name} </yellow>, subtask: <green> {subtask} </green> with metric: <red> {task_metric} </red>"
                     )
-                    # Use empty dictionary if the arguments is None.
-                    # This is done to be able to use update function later on.
-                    task_metric_args = {} if not task_metric_args else task_metric_args
+                    subtask_results = {}
+                    # Subtasks can overwrite/add some arguments to the metric argument defined on the task level
+                    # For example, we should be able to define a specific tokenizer for Chinese only
+                    if subtask_args is None:
+                        subtask_args = {}
+                    subtask_metrics = (
+                        subtask_args.get("metrics", {})
+                        if subtask_args is not None
+                        else {}
+                    )
+                    output_path = (
+                        output_dir
+                        / task_name
+                        / subtask
+                        / model["type"]
+                        / model["name"]
+                        / "evaluation.json"
+                    )
                     # update subtask specific args, if they are specified
                     subtask_metric_args = subtask_metrics.get(task_metric)
                     subtask_metric_args = (
@@ -154,6 +157,22 @@ def run_evaluations(configs: dict) -> dict:
                     eval_args = combine_metrics_args(
                         task_metric_args, subtask_metric_args
                     )
+                    if reinstantiate_metric and not subtask_metric_args:
+                        print(eval_args)
+                        logger.info(f"Reinsantiating metric to reset task args.")
+                        instantiated_metric = available_metrics[task_metric](
+                            **eval_args
+                        )
+                        reinstantiate_metric = False
+                    if subtask_metric_args:
+                        print(eval_args)
+                        reinstantiate_metric = True
+                        logger.info(
+                            f"Reinsantiating metric given new args for subtask."
+                        )
+                        instantiated_metric = available_metrics[task_metric](
+                            **eval_args
+                        )
                     subtask_metrics[task_metric] = eval_args
                     eval_args.update(
                         {k: v for (k, v) in subtask_args.items() if k != "metrics"}
@@ -169,22 +188,25 @@ def run_evaluations(configs: dict) -> dict:
                         model_type,
                         model_name,
                     )
-                    metric_score = run_metric(
-                        metric_name=task_metric, eval_args=eval_args
+                    metric_score = run_instantiated_metric(
+                        metric=instantiated_metric,
+                        hypothesis_path=eval_args["hypothesis_path"],
+                        gold_data_path=eval_args["gold_data_path"],
                     )
                     subtask_results.update(metric_score)
-                if Path(output_path).exists():
-                    existing_results = json.load(open(output_path, "r"))
-                    subtask_results.update(existing_results)
-                save_to_json(
-                    save_location=output_path,
-                    data=subtask_results,
-                )
-                # save run metadata to the same path for better experiment tracking
-                save_to_json(
-                    save_location=Path(output_path).parent / "metadata.json",
-                    data=config_to_save,
-                )
+
+                    if Path(output_path).exists():
+                        existing_results = json.load(open(output_path, "r"))
+                        subtask_results.update(existing_results)
+                    save_to_json(
+                        save_location=output_path,
+                        data=subtask_results,
+                    )
+                    # save run metadata to the same path for better experiment tracking
+                    save_to_json(
+                        save_location=Path(output_path).parent / "metadata.json",
+                        data=config_to_save,
+                    )
             task_results.update({subtask: subtask_results})
 
         all_scores.update({task_name: task_results})
@@ -334,13 +356,22 @@ def command_selector(args):
             scores = run_evaluations(config_args)
         else:
             eval_args = args.eval_args
-            output_path = args.output_dir / "evaluation.json"
-            eval_args["gold_data_path"] = args.raw_data_path
-            eval_args["hypothesis_path"] = args.generations_path
-            metric_scores = run_metric(
-                metric_name=args.metric, eval_args=args.eval_args
-            )
-            save_to_json(save_location=output_path, data=metric_scores)
+            metric = available_metrics[args.metric](**(eval_args))
+            assert (
+                len(args.output_dirs)
+                == len(args.raw_data_paths)
+                == len(args.generations_paths)
+            ), "The number of output directories, raw data paths and generations paths should be the same."
+            for output_dir, raw_data_path, generations_path in zip(
+                args.output_dirs, args.raw_data_paths, args.generations_paths
+            ):
+                output_path = output_dir / "evaluation.json"
+                metric_scores = run_instantiated_metric(
+                    metric=metric,
+                    hypothesis_path=generations_path,
+                    gold_data_path=raw_data_path,
+                )
+                save_to_json(save_location=output_path, data=metric_scores)
     elif args.command == "index":
         if args.config:
             config_args = parse_yaml_config(args.config)
@@ -355,8 +386,13 @@ def command_selector(args):
             config_args = parse_yaml_config(args.config)
             run_generations(config_args, args.config, config_type="generate")
         else:
-            raise ValueError(
-                "ERROR: You need to provide a config file to run the generation."
+            simple_generate(
+                args.input_paths,
+                args.output_paths,
+                args.model_path,
+                args.model_type,
+                args.model_args,
+                args.metadata_file_paths,
             )
 
     elif args.command == "gen-eval":
@@ -407,6 +443,7 @@ if __name__ == "__main__":
         description="Calculates the scores of the given hypothesis for the given task",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
+    # CONFIG CLI ARGS
     parser.add_argument(
         "command",
         choices=["index", "prepare", "evaluate", "generate", "gen-eval", "lm_eval"],
@@ -423,20 +460,73 @@ if __name__ == "__main__":
         help="Path to the yaml file to read all the necessary information from."
         "NOTE: Overwriting the parameters of the config file by the values provided via commandline is NOT supported",
     )
+    # GENERATE CLI ARGS
     parser.add_argument(
-        "--output_dir", "-od", type=Path, default=None, help="Output directory."
+        "--input_paths",
+        "-ip",
+        type=Path,
+        nargs="+",
+        default=None,
+        help="Path to the input file.",
     )
     parser.add_argument(
-        "--raw_data_path",
+        "--output_paths",
+        "-op",
+        type=Path,
+        nargs="+",
+        default=None,
+        help="Path to the output file.",
+    )
+    parser.add_argument(
+        "--model_path",
+        "-mp",
+        type=str,
+        default=None,
+        help="Path to the model to use for generation.",
+    )
+    parser.add_argument(
+        "--model_type",
+        "-mt",
+        type=str,
+        default=None,
+        help="Type of the model to use for generation.",
+    )
+    parser.add_argument(
+        "--model_args",
+        "-ma",
+        type=parse_dict_arg,
+        default=None,
+        help="Model arguments dictionary.",
+    )
+    parser.add_argument(
+        "--metadata_file_paths",
+        "-mfp",
+        type=Path,
+        nargs="+",
+        default=None,
+    )
+    # EVALUATE CLI ARGS
+    parser.add_argument(
+        "--output_dirs",
+        "-od",
+        type=Path,
+        nargs="+",
+        default=None,
+        help="Output directory.",
+    )
+    parser.add_argument(
+        "--raw_data_paths",
         "-rdp",
         type=Path,
+        nargs="+",
         default=None,
         help="Path to raw data jsonl file.",
     )
     parser.add_argument(
-        "--generations_path",
+        "--generations_paths",
         "-gp",
         type=Path,
+        nargs="+",
         default=None,
         help="Path to generations txt file (1 generation per file).",
     )

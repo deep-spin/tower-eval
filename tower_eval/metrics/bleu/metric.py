@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from sacrebleu.metrics import BLEU as SacreBLEU
+
 from tower_eval.metrics.bleu.result import BLEUResult
 from tower_eval.metrics.metrics_handler import Metric
 from tower_eval.metrics.result_handler import MetricResult
@@ -14,10 +15,8 @@ class BLEU(Metric):
         self.lowercase = kwargs.get("lowercase", lowercase)
         self.tokenizer = kwargs.get("tokenizer", tokenizer)
 
-    def run(self) -> dict:
-        hypotheses, gold_data = self._handle_inputs(
-            self.hypothesis_path, self.gold_data_path
-        )
+    def run(self, hypothesis_path, gold_data_path) -> dict:
+        hypotheses, gold_data = self._handle_inputs(hypothesis_path, gold_data_path)
         references = gold_data["ref"]
         result = self.evaluate(
             hypotheses, references, lowercase=self.lowercase, tokenize=self.tokenizer

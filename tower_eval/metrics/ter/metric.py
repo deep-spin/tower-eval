@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from sacrebleu.metrics import TER as SacreTER
+
 from tower_eval.metrics.metrics_handler import Metric
 from tower_eval.metrics.result_handler import MetricResult
 from tower_eval.metrics.ter.result import TERResult
@@ -20,10 +21,8 @@ class TER(Metric):
         self.asian_support = kwargs.get("asian_support", asian_support)
         self.case_sensitive = kwargs.get("case_sensitive", case_sensitive)
 
-    def run(self) -> dict:
-        hypotheses, gold_data = self._handle_inputs(
-            self.hypothesis_path, self.gold_data_path
-        )
+    def run(self, hypothesis_path, gold_data_path) -> dict:
+        hypotheses, gold_data = self._handle_inputs(hypothesis_path, gold_data_path)
         references = gold_data["ref"]
         result = self.evaluate(hypotheses, references)
         result.print_result(self.metric_name())

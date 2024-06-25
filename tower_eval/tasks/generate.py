@@ -3,8 +3,14 @@ from pathlib import Path
 
 from jsonargparse import CLI
 from loguru import logger
+
 from tower_eval.models import available_models
-from tower_eval.utils import make_dir_if_not_exists, parse_yaml_config, save_to_json, get_langs, add_average_generation_time
+from tower_eval.utils import (
+    add_average_generation_time,
+    get_langs,
+    make_dir_if_not_exists,
+    parse_yaml_config,
+)
 
 
 def parse_gen_eval_config(config_path: str) -> dict:
@@ -67,7 +73,7 @@ def generate(i: int, config_path: str, config_type: str) -> None:
         for subtask, _ in subtasks.items():
             input_file = data_dir / task_name / subtask / "instructions.txt"
             output_path = output_dir / task_name / subtask / model_type / model_name
-            output_file = (output_path / "generation.txt")
+            output_file = output_path / "generation.txt"
             make_dir_if_not_exists(output_file)
             metadata_file = output_path / "metadata.json"
             logger.opt(colors=True).info(
@@ -80,13 +86,41 @@ def generate(i: int, config_path: str, config_type: str) -> None:
 
                 model.source_language = src_lang
                 model.target_language = tgt_lang
-            model.generation_with_resume(input_file=input_file, output_file=output_file, metadata=configs, metadata_file=metadata_file)
-            add_average_generation_time(output_file, metadata_file, language=tgt_lang, mode=average_time_metric)
-    try:
-        model.server.close_server()
-    # in case model does not have a close server attribute (e.g., openAI)
-    except AttributeError:
-        pass
+            model.generation_with_resume(
+                input_file=input_file,
+                output_file=output_file,
+                metadata=configs,
+                metadata_file=metadata_file,
+            )
+            add_average_generation_time(
+                output_file, metadata_file, language=tgt_lang, mode=average_time_metric
+            )
+
+
+def simple_generate(
+    input_paths: list[str],
+    output_paths: list[str],
+    model_path: str,
+    model_type: str,
+    model_args: dict,
+    metadata_file_paths: list[str],
+):
+    model_path_key = "model_dir" if model_type == "vllm" else "model"
+    model_args[model_path_key] = model_path
+    model = available_models[model_type](**(model_args))
+    metadata = {
+        "model_type": model_type,
+        "model_args": model_args,
+    }
+    for input_path, output_path, metadata_file_path in zip(
+        input_paths, output_paths, metadata_file_paths
+    ):
+        model.generation_with_resume(
+            input_file=input_path,
+            output_file=output_path,
+            metadata=metadata,
+            metadata_file=metadata_file_path,
+        )
 
 
 if __name__ == "__main__":

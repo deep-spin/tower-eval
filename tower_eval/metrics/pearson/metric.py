@@ -1,18 +1,19 @@
 # -*- coding: utf-8 -*-
 from scipy.stats import pearsonr
+from tqdm import tqdm
+
 from tower_eval.metrics.metrics_handler import Metric
 from tower_eval.metrics.pearson.result import PearsonResult
 from tower_eval.metrics.result_handler import MetricResult
-from tqdm import tqdm
 
 
 class PEARSON(Metric):
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
 
-    def run(self) -> dict:
+    def run(self, hypothesis_path, gold_data_path) -> dict:
         predicted_scores, gold_data = self._handle_inputs(
-            self.hypothesis_path, self.gold_data_path
+            hypothesis_path, gold_data_path
         )
         gold_scores = gold_data["score"]
 
