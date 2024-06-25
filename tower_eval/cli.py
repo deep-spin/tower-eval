@@ -122,8 +122,11 @@ def run_evaluations(configs: dict) -> dict:
             subtasks = task.get("subtasks")
             task_metrics = task.get("metrics")
             for task_metric, task_metric_args in task_metrics.items():
+                # Use empty dictionary if the arguments is None.
+                # This is done to be able to use update function later on.
                 task_metric_args = {} if task_metric_args is None else task_metric_args
                 instantiated_metric = available_metrics[task_metric](**task_metric_args)
+                reinstantiate_metric = False
                 for subtask, subtask_args in subtasks.items():
                     logger.opt(colors=True).info(
                         f"Evaluating the results of model <green> {model_name} </green> on task: <yellow> {task_name} </yellow>, subtask: <green> {subtask} </green> with metric: <red> {task_metric} </red>"
@@ -146,9 +149,6 @@ def run_evaluations(configs: dict) -> dict:
                         / model["name"]
                         / "evaluation.json"
                     )
-                    # Use empty dictionary if the arguments is None.
-                    # This is done to be able to use update function later on.
-                    task_metric_args = {} if not task_metric_args else task_metric_args
                     # update subtask specific args, if they are specified
                     subtask_metric_args = subtask_metrics.get(task_metric)
                     subtask_metric_args = (
@@ -157,8 +157,19 @@ def run_evaluations(configs: dict) -> dict:
                     eval_args = combine_metrics_args(
                         task_metric_args, subtask_metric_args
                     )
+                    if reinstantiate_metric and not subtask_metric_args:
+                        print(eval_args)
+                        logger.info(f"Reinsantiating metric to reset task args.")
+                        instantiated_metric = available_metrics[task_metric](
+                            **eval_args
+                        )
+                        reinstantiate_metric = False
                     if subtask_metric_args:
-                        logger.info(f"Reinsantiating metric given subtask args.")
+                        print(eval_args)
+                        reinstantiate_metric = True
+                        logger.info(
+                            f"Reinsantiating metric given new args for subtask."
+                        )
                         instantiated_metric = available_metrics[task_metric](
                             **eval_args
                         )

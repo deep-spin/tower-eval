@@ -339,7 +339,7 @@ def get_eval_args_given_task(
     # add language argument to eval_args as it is needed in some metrics
     language = subtask.split(".")[1]
     if "-" in language:
-        language = language.split("-")[1]
+        _, language = get_langs(language)
     eval_args["language"] = language
 
     return eval_args

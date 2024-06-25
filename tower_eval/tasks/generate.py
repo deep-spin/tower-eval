@@ -107,7 +107,6 @@ def simple_generate(
 ):
     model_path_key = "model_dir" if model_type == "vllm" else "model"
     model_args[model_path_key] = model_path
-    print(model_args)
     model = available_models[model_type](**(model_args))
     metadata = {
         "model_type": model_type,
