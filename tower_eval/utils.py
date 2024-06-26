@@ -165,6 +165,7 @@ def write_lines(
     lines: Iterable[str],
     escape_newline: bool = False,
     escape_return_char: bool = True,
+    verbose: bool = True,
 ) -> None:
     """Writes lines to a file.
 
@@ -182,13 +183,13 @@ def write_lines(
     out_lines = []
     for i, line in enumerate(lines):
         if escape_return_char:
-            if "\r" in line:
+            if "\r" in line and verbose:
                 logger.opt(ansi=True).warning(
                     f"Detected carriage return in line {i + 1} (\\r). This may cause errors downstream. Escaping. This behaviour is the default; you can turn it off with escape_return_char."
                 )
             line = line.replace("\r", "\\r")
         if escape_newline:
-            if "\n" in line:
+            if "\n" in line and verbose:
                 logger.opt(ansi=True).warning(
                     f"Found new line in line {i + 1} (\\n). This may cause errors downstream. Escaping."
                 )

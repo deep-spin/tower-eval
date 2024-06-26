@@ -158,14 +158,12 @@ def run_evaluations(configs: dict) -> dict:
                         task_metric_args, subtask_metric_args
                     )
                     if reinstantiate_metric and not subtask_metric_args:
-                        print(eval_args)
                         logger.info(f"Reinsantiating metric to reset task args.")
                         instantiated_metric = available_metrics[task_metric](
                             **eval_args
                         )
                         reinstantiate_metric = False
                     if subtask_metric_args:
-                        print(eval_args)
                         reinstantiate_metric = True
                         logger.info(
                             f"Reinsantiating metric given new args for subtask."
@@ -435,7 +433,7 @@ def command_selector(args):
             scores = run_harness_evaluations(config_args)
             args.scores_output_file.write(json.dumps(scores, indent=4) + "\n")
     else:
-        print(f"ERROR: {args.command} is not supported, yet.")
+        logger.error(f"{args.command} is not supported!")
 
 
 if __name__ == "__main__":
