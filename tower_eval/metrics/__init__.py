@@ -14,12 +14,13 @@ from tower_eval.metrics.error_span_detection_recall.metric import (
 )
 from tower_eval.metrics.f1.metric import F1
 from tower_eval.metrics.f1_sequence.metric import F1SEQUENCE
+from tower_eval.metrics.metricx.metric import MetricX
+from tower_eval.metrics.metricx_qe.metric import MetricXQE
 from tower_eval.metrics.pearson.metric import PEARSON
 from tower_eval.metrics.perplexity.metric import Perplexity
 from tower_eval.metrics.spearman.metric import SPEARMAN
 from tower_eval.metrics.ter.metric import TER
 from tower_eval.metrics.xcomet.metric import XCOMET
-from tower_eval.metrics.metricx.metric  import MetricX
 
 __all__ = [
     TER,
@@ -40,6 +41,7 @@ __all__ = [
     ErrorSpanDetectionPrecision,
     Perplexity,
     MetricX,
+    MetricXQE,
 ]
 
 

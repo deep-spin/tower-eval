@@ -5,7 +5,7 @@ from metricx23 import models
 from transformers import AutoTokenizer
 
 from tower_eval.metrics.metrics_handler import Metric
-from tower_eval.metrics.metricx.result import MetricXResult
+from tower_eval.metrics.metricx_qe.result import MetricXResult
 from tower_eval.metrics.result_handler import MetricResult
 
 if torch.cuda.is_available():
@@ -15,12 +15,12 @@ else:
     DEVICE = torch.device("cpu")
 
 
-class MetricX(Metric):
+class MetricXQE(Metric):
     def __init__(
         self,
         lowercase: bool = False,
         tokenizer="google/mt5-xl",
-        model="google/metricx-23-xl-v2p0",
+        model="google/metricx-23-qe-xl-v2p0",
         **kwargs
     ) -> None:
         super().__init__(**kwargs)
@@ -35,19 +35,19 @@ class MetricX(Metric):
 
     @staticmethod
     def metric_name():
-        return "metricx"
+        return "metricx_qe"
 
     def run(self, hypothesis_path, gold_data_path) -> dict:
         hypotheses, gold_data = self._handle_inputs(hypothesis_path, gold_data_path)
-        references = gold_data["ref"]
-        result = self.evaluate(hypotheses, references)
+        sources = gold_data["src"]
+        result = self.evaluate(hypotheses, sources)
         result.print_result(self.metric_name())
         return result.format_result(self.metric_name())
 
     def process_result(self, result) -> MetricResult:
         pass
 
-    def evaluate(self, hypotheses: list, references: list) -> MetricXResult:
+    def evaluate(self, hypotheses: list, sources: list) -> MetricXResult:
         """
         Evaluate function receives the hypotheses and the references and returns a COMETResult object.
 
@@ -57,10 +57,7 @@ class MetricX(Metric):
 
         def _make_input(example):
             example["input"] = (
-                "candidate: "
-                + example["hypothesis"]
-                + " reference: "
-                + example["reference"]
+                "candidate: " + example["hypothesis"] + " source: " + example["source"]
             )
             return example
 
@@ -74,9 +71,7 @@ class MetricX(Metric):
             example["attention_mask"] = example["attention_mask"][:-1]
             return example
 
-        samples = [
-            {"hypothesis": h, "reference": r} for h, r in zip(hypotheses, references)
-        ]
+        samples = [{"hypothesis": h, "source": s} for h, s in zip(hypotheses, sources)]
         ds = Dataset.from_list(samples)
         ds = ds.map(_make_input)
         ds = ds.map(_tokenize)
