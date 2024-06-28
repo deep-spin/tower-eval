@@ -477,3 +477,9 @@ def parse_dict_arg(arg):
             raise argparse.ArgumentTypeError("Argument is not a valid dictionary")
     except (ValueError, SyntaxError):
         raise argparse.ArgumentTypeError("Argument is not a valid dictionary")
+
+
+def write_jsonl(path, data):
+    with open(path, "w") as f:
+        for d in data:
+            f.write(json.dumps(d, ensure_ascii=False) + "\n")

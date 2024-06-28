@@ -6,6 +6,7 @@ import openai
 from loguru import logger
 from openai.error import InvalidRequestError
 from openai.util import ApiType
+
 from tower_eval.models.exceptions import GenerationException
 from tower_eval.models.inference_handler import Generator
 from tower_eval.utils import generate_with_retries
@@ -43,7 +44,7 @@ class OpenAI(Generator):
         retry_max_interval: int = 10,
         retry_min_interval: int = 4,
         retry_multiplier: int = 1,
-        stop_sequences: list[str] = ["<|endoftext|>", "\n", "\\n"],
+        stop_sequences: list[str] = [],
         run_async: bool = False,
         system_prompt: str = None,
         **kwargs,
