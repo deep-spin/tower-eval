@@ -113,20 +113,20 @@ def run_evaluations(configs: dict) -> dict:
     config_to_save = deepcopy(configs)
     output_dir = Path(configs.get("output_dir", None))
     data_dir = Path(configs.get("data_dir"))
-    for model in configs.get("models"):
-        model_type = model["type"]
-        model_name = model["name"]
-        for task in configs.get("tasks"):
-            task_results = {}
-            task_name = task.get("name")
-            subtasks = task.get("subtasks")
-            task_metrics = task.get("metrics")
-            for task_metric, task_metric_args in task_metrics.items():
-                # Use empty dictionary if the arguments is None.
-                # This is done to be able to use update function later on.
-                task_metric_args = {} if task_metric_args is None else task_metric_args
-                instantiated_metric = available_metrics[task_metric](**task_metric_args)
-                reinstantiate_metric = False
+    for task in configs.get("tasks"):
+        task_results = {}
+        task_name = task.get("name")
+        subtasks = task.get("subtasks")
+        task_metrics = task.get("metrics")
+        for task_metric, task_metric_args in task_metrics.items():
+            # Use empty dictionary if the arguments is None.
+            # This is done to be able to use update function later on.
+            task_metric_args = {} if task_metric_args is None else task_metric_args
+            instantiated_metric = available_metrics[task_metric](**task_metric_args)
+            reinstantiate_metric = False
+            for model in configs.get("models"):
+                model_type = model["type"]
+                model_name = model["name"]
                 for subtask, subtask_args in subtasks.items():
                     logger.opt(colors=True).info(
                         f"Evaluating the results of model <green> {model_name} </green> on task: <yellow> {task_name} </yellow>, subtask: <green> {subtask} </green> with metric: <red> {task_metric} </red>"

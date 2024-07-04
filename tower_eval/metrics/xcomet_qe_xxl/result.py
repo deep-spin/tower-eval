@@ -2,7 +2,7 @@
 from tower_eval.metrics.result_handler import MetricResult
 
 
-class XCOMETResult(MetricResult):
+class XCOMETQEXXLResult(MetricResult):
     """
     COMET Result Handler.
     TODO: Add the segment-level to the output as additional params.

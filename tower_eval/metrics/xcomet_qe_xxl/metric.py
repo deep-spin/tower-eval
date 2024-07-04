@@ -3,10 +3,10 @@ from comet import download_model, load_from_checkpoint
 
 from tower_eval.metrics.metrics_handler import Metric
 from tower_eval.metrics.result_handler import MetricResult
-from tower_eval.metrics.xcomet.result import XCOMETResult
+from tower_eval.metrics.xcomet_qe_xxl.result import XCOMETQEXXLResult
 
 
-class XCOMET(Metric):
+class XCOMETQEXXL(Metric):
     def __init__(
         self,
         lowercase: bool = False,
@@ -27,14 +27,12 @@ class XCOMET(Metric):
 
     def run(self, hypothesis_path, gold_data_path) -> dict:
         hypotheses, gold_data = self._handle_inputs(hypothesis_path, gold_data_path)
-        references, sources = gold_data["ref"], gold_data["src"]
-        result = self.evaluate(hypotheses, references, sources)
+        sources = gold_data["src"]
+        result = self.evaluate(hypotheses, sources)
         result.print_result(self.metric_name())
         return result.format_result(self.metric_name())
 
-    def evaluate(
-        self, hypotheses: list, references: list, sources: list
-    ) -> XCOMETResult:
+    def evaluate(self, hypotheses: list, sources: list) -> XCOMETQEXXLResult:
         """
         Evaluate function receives the hypotheses and the references and returns a COMETResult object.
 
@@ -42,7 +40,7 @@ class XCOMET(Metric):
         :param references: List of the reference sentences.
         :param sources: List of source sentences
         """
-        samples = {"src": sources, "mt": hypotheses, "ref": references}
+        samples = {"src": sources, "mt": hypotheses}
         samples = [dict(zip(samples, t)) for t in zip(*samples.values())]
 
         outputs = self.model.predict(
@@ -53,7 +51,7 @@ class XCOMET(Metric):
         )
         system_score, segments_scores = outputs.system_score, outputs.scores
 
-        comet_result = XCOMETResult(
+        comet_result = XCOMETQEXXLResult(
             {
                 "system_score": system_score,
                 "segments_scores": segments_scores,
@@ -66,4 +64,4 @@ class XCOMET(Metric):
 
     @staticmethod
     def metric_name():
-        return "xcomet"
+        return "xcomet_qe_xxl"
