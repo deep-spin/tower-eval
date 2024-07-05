@@ -2,6 +2,11 @@
 import vertexai
 from vertexai.language_models import TextGenerationModel
 from vertexai.preview.generative_models import GenerativeModel
+
+import base64
+
+import vertexai.preview.generative_models as generative_models
+
 from tower_eval.models.exceptions import GenerationException
 from tower_eval.models.inference_handler import Generator
 from tower_eval.utils import generate_with_retries
@@ -48,7 +53,25 @@ class VertexAI(Generator):
         # Gimini and PaLM models need to be called through different model APIs with some small differences.
         # But, to avoid having two different inference endpoint in Tower-Eval we decided to handle both of them here.
         self.model_type = API_TYPE.get(model)
-        if self.model_type == "gemini":
+        if self.model_type == "gemini-1.5":
+            try:
+                project=kwargs["project"]
+                location=kwargs["location"]
+            except:
+                logger.error(f"<red>For Gemeni-1.5 models you need to provide \"project\" and \"location\" in your config file.</red>")
+            vertexai.init(project=project, location=location)
+            from vertexai.generative_models import GenerativeModel
+            self.model = GenerativeModel(model)
+            self.inference_function = self.model.generate_content
+            self.model_args = {
+                "generation_config": {
+                    "max_output_tokens": max_tokens,
+                    "temperature": temperature,
+                    "top_p": top_p,
+                },
+            }
+        elif self.model_type == "gemini":
+            from vertexai.preview.generative_models import GenerativeModel
             self.model = GenerativeModel(model)
             self.inference_function = self.model.generate_content
             self.model_args = {
@@ -83,7 +106,7 @@ class VertexAI(Generator):
             str: Returns the response used.
         """
         try:
-            if self.model_type == "gemini":
+            if self.model_type in ["gemini", "gemini-1.5"]:
                 prompt = {"contents": input_line}
             elif self.model_type == "palm":
                 prompt = {"prompt": input_line}
