@@ -73,12 +73,7 @@ class VertexAI(Generator):
             }
         elif self.model_type == "gemini":
             from vertexai.preview.generative_models import GenerativeModel
-            if model == "gemini-1.0-pro-002":
-                logger.info(f"Using the following system prompt: {system_prompt}")
-                self.model = GenerativeModel(model, system_instruction=system_prompt)
-            else:
-                logger.info(f"Model \"{model}\" doesn't support system prompt. So, running the inference with user prompt only.")
-                self.model = GenerativeModel(model)
+            self.model = GenerativeModel(model, system_instruction=system_prompt)
             self.inference_function = self.model.generate_content
             self.model_args = {
                 "generation_config": {
