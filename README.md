@@ -263,7 +263,20 @@ An example config can be found in `configs/examples/gen_eval.yaml`.
 
 <a name="ModelsSection"></a>
 ### Model Arguments
-Currently, tower-eval supports OpenAI models and those supported by ``vllm``.
+Currently, tower-eval supports the models released by `Anthorpic`, `Cohere`, `OpenAI`, the family of models available in `VertexAI` by `Google`, and those supported by ``vllm``.
+The supported models of `vertex-ai` are the followings:
+  - `palm`:
+    - `text-bison`
+    - `text-unicorn`
+    - `text-bison-32k`
+    - `chat-bison`
+  - `gemini` (aka `gemini-1.0`):
+    - `gemini-pro`
+    - `gemini-1.0-pro-002`
+  - `gemini-1.5`:
+    -  `gemini-1.5-flash-001`
+    -  `gemini-1.5-pro-001`
+ 
 
 In your config file you need to define the following parameteres:
 - `name`: This field is primarily used for defining the output folder, and doesn't impact the underlying model used for inference.
@@ -285,6 +298,13 @@ In your config file you need to define the following parameteres:
   - `retry_max_attempts`: **[OpenAI and VertexAI only]** The maximum number of retries in case there is no response from OpenAI's generation endpoint.
   - `retry_max_interval`: **[OpenAI and VertexAI only]** The maximum time to wait before re-sending the request in case there is no response from OpenAI's generation endpoint.
   - `retry_min_interval`: **[OpenAI and VertexAI only]** The minimum time to wait before re-sending the request in case there is no response from OpenAI's generation endpoint.
+  - `system_prompt`: This argument is not available for all the models. The ones that support `system_prompt` are:
+    - OpenAI `gpt-4o`
+    - Gemini-1.0 (only `gemini-1.0-pro-002`)
+    - Gemini-1.5 (only `gemini-1.5-flash-001` and `gemini-1.5-pro-001`),
+    - Anthropic: all models
+  - `project`: **[`gemini-1.5` models only]**. For detailed information on how to set this variable properly in your config file, please refer to the [Gemini-1.5 documentation](https://console.cloud.google.com/vertex-ai/publishers/google/model-garden/gemini-1.5-pro-001).
+  - `location`: **[`gemini-1.5` models only]**. For detailed information on how to set this variable properly in your config file, please refer to the [Gemini-1.5 documentation](https://console.cloud.google.com/vertex-ai/publishers/google/model-garden/gemini-1.5-pro-001).
 
 For the updated information on the supported models by VertexAI please check the [Model Information page](https://cloud.google.com/vertex-ai/docs/generative-ai/learn/models?_ga=2.42102502.-292947728.1686331955) on Google Cloud.
 
