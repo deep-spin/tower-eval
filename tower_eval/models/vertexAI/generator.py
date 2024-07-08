@@ -41,6 +41,7 @@ class VertexAI(Generator):
         retry_min_interval: int = 4,
         retry_multiplier: int = 1,
         run_async: bool = False,
+        system_prompt: str = None,
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
@@ -49,7 +50,6 @@ class VertexAI(Generator):
         self.retry_max_interval = retry_max_interval
         self.retry_min_interval = retry_min_interval
         self.retry_multiplier = retry_multiplier
-
         # Gimini and PaLM models need to be called through different model APIs with some small differences.
         # But, to avoid having two different inference endpoint in Tower-Eval we decided to handle both of them here.
         self.model_type = API_TYPE.get(model)
@@ -58,10 +58,11 @@ class VertexAI(Generator):
                 project=kwargs["project"]
                 location=kwargs["location"]
             except:
-                logger.error(f"<red>For Gemeni-1.5 models you need to provide \"project\" and \"location\" in your config file.</red>")
+                logger.opt(colors=True).error(f"<red>For Gemeni-1.5 models you need to provide \"project\" and \"location\" in your config file.</red>")
             vertexai.init(project=project, location=location)
             from vertexai.generative_models import GenerativeModel
-            self.model = GenerativeModel(model)
+            logger.info(f"Using the following system prompt: {system_prompt}")
+            self.model = GenerativeModel(model, system_instruction=system_prompt)
             self.inference_function = self.model.generate_content
             self.model_args = {
                 "generation_config": {
@@ -72,7 +73,12 @@ class VertexAI(Generator):
             }
         elif self.model_type == "gemini":
             from vertexai.preview.generative_models import GenerativeModel
-            self.model = GenerativeModel(model)
+            if model == "gemini-1.0-pro-002":
+                logger.info(f"Using the following system prompt: {system_prompt}")
+                self.model = GenerativeModel(model, system_instruction=system_prompt)
+            else:
+                logger.info(f"Model \"{model}\" doesn't support system prompt. So, running the inference with user prompt only.")
+                self.model = GenerativeModel(model)
             self.inference_function = self.model.generate_content
             self.model_args = {
                 "generation_config": {
@@ -82,6 +88,7 @@ class VertexAI(Generator):
                 },
             }
         elif self.model_type == "palm":
+            logger.info(f"Model \"{model}\" doesn't support system prompt. So, running the inference with user prompt only.")
             self.model = TextGenerationModel.from_pretrained(model)
             self.inference_function = self.model.predict
             self.model_args = {
