@@ -18,6 +18,7 @@ from tower_eval.metrics.f1_sequence.metric import F1SEQUENCE
 from tower_eval.metrics.metricx.metric import MetricX
 from tower_eval.metrics.metricx_qe.metric import MetricXQE
 from tower_eval.metrics.metricx_qe_xxl.metric import MetricXQEXXL
+from tower_eval.metrics.metricx_xxl.metric import MetricXXXL
 from tower_eval.metrics.pearson.metric import PEARSON
 from tower_eval.metrics.perplexity.metric import Perplexity
 from tower_eval.metrics.spearman.metric import SPEARMAN
@@ -32,6 +33,7 @@ __all__ = [
     XCOMETQEXXL,
     COMET,
     COMETKiwi,
+    COMETKiwi23XXL,
     BLEURT,
     CHRF,
     ERRANT,
@@ -47,7 +49,7 @@ __all__ = [
     MetricX,
     MetricXQE,
     MetricXQEXXL,
-    COMETKiwi23XXL,
+    MetricXXXL,
 ]
 
 
