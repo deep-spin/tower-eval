@@ -9,7 +9,6 @@ Composed by 4 main commands:
     - gen-eval      Used to first run the generation and then the evaluation on the produced hypotheses.
 """
 import argparse
-import ast
 import json
 import os
 import random
