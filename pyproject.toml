@@ -12,9 +12,6 @@ maintainers = [
     ]
 readme = "README.md"
 
-[tool.poetry.scripts]
-ml-metrics = "tower-eval.cli:compute_metrics"
-
 [tool.poetry.dependencies]
 python = ">=3.9.0,<3.13"
 sacrebleu = {extras = ["ko", "ja"], version = "^2.3.1"}
