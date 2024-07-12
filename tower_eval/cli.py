@@ -434,7 +434,7 @@ def command_selector(args, available_metrics=available_metrics, available_models
                 if step == "eval":
                     model_dict["hypothesis_dir"] = config_args["gen_output_dir"]
                 configs[step]["models"].append(model_dict)
-        run_generations(configs["gen"], args.config, config_type="gen-eval")
+        run_generations(configs["gen"], args.config, config_type="gen-eval", available_models=available_models)
         run_evaluations(configs["eval"], available_metrics=available_metrics)
 
     elif args.command == "lm_eval":
