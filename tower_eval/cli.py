@@ -21,8 +21,9 @@ import numpy as np
 from loguru import logger
 
 from tower_eval.metrics import available_metrics
+from tower_eval.models import available_models
 from tower_eval.tasks.evaluate import run_instantiated_metric
-from tower_eval.tasks.generate import simple_generate
+from tower_eval.tasks.generate import generate, simple_generate
 from tower_eval.tasks.index import index_data
 from tower_eval.tasks.prepare import prepare_data
 from tower_eval.utils import (
@@ -102,7 +103,7 @@ def run_harness_evaluations(configs: dict):
                 )
 
 
-def run_evaluations(configs: dict) -> dict:
+def run_evaluations(configs: dict, available_metrics: dict=available_metrics) -> dict:
     all_scores = defaultdict(lambda: defaultdict(dict))
     logger.remove()
     logger.add(
@@ -316,7 +317,7 @@ def run_index(config: dict) -> None:
             )
 
 
-def run_generations(configs: dict, config_path: str, config_type: str) -> dict:
+def run_generations(configs: dict, config_path: str, config_type: str, available_models: dict=available_models) -> dict:
     logger.remove()
     logger.add(
         sys.stderr,
@@ -327,25 +328,33 @@ def run_generations(configs: dict, config_path: str, config_type: str) -> dict:
     for i, model in enumerate(models):
         model_args = model.get("arguments")
         model_args = {} if not model_args else model_args
-        current_dir = os.getcwd()
-        subprocess_args = [
-            f"python",
-            f"{current_dir}/tower_eval/tasks/generate.py",
-            "--i",
-            f"{str(i)}",
-            "--config_path",
-            f"{config_path}",
-            "--config_type",
-            f"{config_type}",
-        ]
-        failure = handle_subprocess(subprocess_args)
-        if failure:
-            logger.error(
-                f"{model['name']} has run into an error. Double check generations before running evaluations."
-            )
+        # We need to handle the VLLM processes with subprocesses
+        if model["type"] == "vllm":
+            subprocess_args = [
+                f"python",
+                "-m",
+                "tower_eval.tasks.generate",
+                "--i",
+                f"{str(i)}",
+                "--config_path",
+                f"{config_path}",
+                "--config_type",
+                f"{config_type}"
+            ]
+            failure = handle_subprocess(subprocess_args)
+            if failure:
+                logger.error(
+                    f"{model['name']} has run into an error. Double check generations before running evaluations."
+                )
+        else:
+            try:
+                # All the models except VLLM can be easily executed without requiring the subprocesses.
+                generate(i, config_path, config_type, available_models)
+            except:
+                logger.error(f"{model['name']} has run into an error. Double check generations before running evaluations.")
 
 
-def command_selector(args):
+def command_selector(args, available_metrics=available_metrics, available_models=available_models):
     if args.command == "evaluate":
         # Either read the information from the config file or directly from the commandline
         # NOTE: Overwriting the parameters of the config file by the values provided via commandline is not supported
@@ -382,7 +391,7 @@ def command_selector(args):
     elif args.command == "generate":
         if args.config:
             config_args = parse_yaml_config(args.config)
-            run_generations(config_args, args.config, config_type="generate")
+            run_generations(config_args, args.config, config_type="generate", available_models=available_models)
         else:
             simple_generate(
                 args.input_paths,
@@ -391,6 +400,7 @@ def command_selector(args):
                 args.model_type,
                 args.model_args,
                 args.metadata_file_paths,
+                available_models
             )
 
     elif args.command == "gen-eval":
@@ -425,7 +435,7 @@ def command_selector(args):
                     model_dict["hypothesis_dir"] = config_args["gen_output_dir"]
                 configs[step]["models"].append(model_dict)
         run_generations(configs["gen"], args.config, config_type="gen-eval")
-        run_evaluations(configs["eval"])
+        run_evaluations(configs["eval"], available_metrics=available_metrics)
 
     elif args.command == "lm_eval":
         if args.config:
@@ -435,8 +445,7 @@ def command_selector(args):
     else:
         logger.error(f"{args.command} is not supported!")
 
-
-if __name__ == "__main__":
+def argument_parser():
     parser = argparse.ArgumentParser(
         description="Calculates the scores of the given hypothesis for the given task",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -542,5 +551,9 @@ if __name__ == "__main__":
         default=None,
         help="Evaluation arguments dictionary.",
     )
-    args = parser.parse_args()
-    command_selector(args)
+    return parser.parse_args()
+
+
+if __name__ == "__main__":
+    args = argument_parser()
+    command_selector(args, available_metrics=available_metrics, available_models=available_models)
