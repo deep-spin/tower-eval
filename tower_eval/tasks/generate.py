@@ -3,7 +3,6 @@ from pathlib import Path
 
 from jsonargparse import CLI
 from loguru import logger
-
 from tower_eval.models import available_models
 from tower_eval.utils import (
     add_average_generation_time,
@@ -46,7 +45,7 @@ def parse_gen_eval_config(config_path: str) -> dict:
     return configs["gen"]
 
 
-def generate(i: int, config_path: str, config_type: str) -> None:
+def generate(i: int, config_path: str, config_type: str, available_models: dict=available_models) -> None:
     if config_type == "generate":
         configs = parse_yaml_config(config_path)
     elif config_type == "gen-eval":
@@ -104,6 +103,7 @@ def simple_generate(
     model_type: str,
     model_args: dict,
     metadata_file_paths: list[str],
+    available_models: dict
 ):
     model_path_key = "model_dir" if model_type == "vllm" else "model"
     model_args[model_path_key] = model_path
