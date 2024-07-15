@@ -371,7 +371,7 @@ def command_selector(
             config_args = parse_yaml_config(args.config)
             scores = run_evaluations(config_args)
         else:
-            metric_scores = {}
+            paths_scores_correspondence = {o: {} for o in args.output_paths}
             for metric in args.metrics:
                 eval_args = args.eval_args.get(metric, {})
                 metric = available_metrics[metric](**(eval_args))
@@ -386,14 +386,15 @@ def command_selector(
                 for output_path, raw_data_path, generations_path in zip(
                     args.output_paths, args.raw_data_paths, args.generations_paths
                 ):
-                    metric_scores.update(
+                    paths_scores_correspondence[output_path].update(
                         run_instantiated_metric(
                             metric=metric,
                             hypothesis_path=generations_path,
                             gold_data_path=raw_data_path,
                         )
                     )
-                    save_to_json(save_location=output_path, data=metric_scores)
+            for output_path, scores in paths_scores_correspondence.items():
+                save_to_json(save_location=output_path, data=scores)
     elif args.command == "index":
         if args.config:
             config_args = parse_yaml_config(args.config)
