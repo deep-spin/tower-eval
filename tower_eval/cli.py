@@ -103,7 +103,7 @@ def run_harness_evaluations(configs: dict):
                 )
 
 
-def run_evaluations(configs: dict, available_metrics: dict=available_metrics) -> dict:
+def run_evaluations(configs: dict, available_metrics: dict = available_metrics) -> dict:
     all_scores = defaultdict(lambda: defaultdict(dict))
     logger.remove()
     logger.add(
@@ -317,7 +317,12 @@ def run_index(config: dict) -> None:
             )
 
 
-def run_generations(configs: dict, config_path: str, config_type: str, available_models: dict=available_models) -> dict:
+def run_generations(
+    configs: dict,
+    config_path: str,
+    config_type: str,
+    available_models: dict = available_models,
+) -> dict:
     logger.remove()
     logger.add(
         sys.stderr,
@@ -339,7 +344,7 @@ def run_generations(configs: dict, config_path: str, config_type: str, available
                 "--config_path",
                 f"{config_path}",
                 "--config_type",
-                f"{config_type}"
+                f"{config_type}",
             ]
             failure = handle_subprocess(subprocess_args)
             if failure:
@@ -351,10 +356,14 @@ def run_generations(configs: dict, config_path: str, config_type: str, available
                 # All the models except VLLM can be easily executed without requiring the subprocesses.
                 generate(i, config_path, config_type, available_models)
             except:
-                logger.error(f"{model['name']} has run into an error. Double check generations before running evaluations.")
+                logger.error(
+                    f"{model['name']} has run into an error. Double check generations before running evaluations."
+                )
 
 
-def command_selector(args, available_metrics=available_metrics, available_models=available_models):
+def command_selector(
+    args, available_metrics=available_metrics, available_models=available_models
+):
     if args.command == "evaluate":
         # Either read the information from the config file or directly from the commandline
         # NOTE: Overwriting the parameters of the config file by the values provided via commandline is not supported
@@ -362,23 +371,26 @@ def command_selector(args, available_metrics=available_metrics, available_models
             config_args = parse_yaml_config(args.config)
             scores = run_evaluations(config_args)
         else:
-            eval_args = args.eval_args
-            metric = available_metrics[args.metric](**(eval_args))
-            assert (
-                len(args.output_dirs)
-                == len(args.raw_data_paths)
-                == len(args.generations_paths)
-            ), "The number of output directories, raw data paths and generations paths should be the same."
-            for output_dir, raw_data_path, generations_path in zip(
-                args.output_dirs, args.raw_data_paths, args.generations_paths
-            ):
-                output_path = output_dir / "evaluation.json"
-                metric_scores = run_instantiated_metric(
-                    metric=metric,
-                    hypothesis_path=generations_path,
-                    gold_data_path=raw_data_path,
+            for metric in args.metrics:
+                eval_args = args.eval_args.get(metric, {})
+                metric = available_metrics[metric](**(eval_args))
+                logger.opt(colors=True).info(
+                    f"Running metric: <green> {metric} </green>"
                 )
-                save_to_json(save_location=output_path, data=metric_scores)
+                assert (
+                    len(args.output_paths)
+                    == len(args.raw_data_paths)
+                    == len(args.generations_paths)
+                ), "The number of output directories, raw data paths and generations paths should be the same."
+                for output_path, raw_data_path, generations_path in zip(
+                    args.output_paths, args.raw_data_paths, args.generations_paths
+                ):
+                    metric_scores = run_instantiated_metric(
+                        metric=metric,
+                        hypothesis_path=generations_path,
+                        gold_data_path=raw_data_path,
+                    )
+                    save_to_json(save_location=output_path, data=metric_scores)
     elif args.command == "index":
         if args.config:
             config_args = parse_yaml_config(args.config)
@@ -391,8 +403,18 @@ def command_selector(args, available_metrics=available_metrics, available_models
     elif args.command == "generate":
         if args.config:
             config_args = parse_yaml_config(args.config)
-            run_generations(config_args, args.config, config_type="generate", available_models=available_models)
+            run_generations(
+                config_args,
+                args.config,
+                config_type="generate",
+                available_models=available_models,
+            )
         else:
+            assert (
+                len(args.input_paths)
+                == len(args.output_paths)
+                == len(args.metadata_file_paths)
+            ), "The number of input, output, and metadata paths should be the same."
             simple_generate(
                 args.input_paths,
                 args.output_paths,
@@ -400,7 +422,7 @@ def command_selector(args, available_metrics=available_metrics, available_models
                 args.model_type,
                 args.model_args,
                 args.metadata_file_paths,
-                available_models
+                available_models,
             )
 
     elif args.command == "gen-eval":
@@ -434,7 +456,12 @@ def command_selector(args, available_metrics=available_metrics, available_models
                 if step == "eval":
                     model_dict["hypothesis_dir"] = config_args["gen_output_dir"]
                 configs[step]["models"].append(model_dict)
-        run_generations(configs["gen"], args.config, config_type="gen-eval", available_models=available_models)
+        run_generations(
+            configs["gen"],
+            args.config,
+            config_type="gen-eval",
+            available_models=available_models,
+        )
         run_evaluations(configs["eval"], available_metrics=available_metrics)
 
     elif args.command == "lm_eval":
@@ -444,6 +471,7 @@ def command_selector(args, available_metrics=available_metrics, available_models
             args.scores_output_file.write(json.dumps(scores, indent=4) + "\n")
     else:
         logger.error(f"{args.command} is not supported!")
+
 
 def argument_parser():
     parser = argparse.ArgumentParser(
@@ -514,14 +542,6 @@ def argument_parser():
     )
     # EVALUATE CLI ARGS
     parser.add_argument(
-        "--output_dirs",
-        "-od",
-        type=Path,
-        nargs="+",
-        default=None,
-        help="Output directory.",
-    )
-    parser.add_argument(
         "--raw_data_paths",
         "-rdp",
         type=Path,
@@ -538,9 +558,10 @@ def argument_parser():
         help="Path to generations txt file (1 generation per file).",
     )
     parser.add_argument(
-        "--metric",
+        "--metrics",
         "-m",
         type=str,
+        nargs="+",
         default=None,
         help="Metric to use for evaluating the generation.",
     )
@@ -548,7 +569,7 @@ def argument_parser():
         "--eval_args",
         "-ea",
         type=parse_dict_arg,
-        default=None,
+        default={},
         help="Evaluation arguments dictionary.",
     )
     return parser.parse_args()
@@ -556,4 +577,6 @@ def argument_parser():
 
 if __name__ == "__main__":
     args = argument_parser()
-    command_selector(args, available_metrics=available_metrics, available_models=available_models)
+    command_selector(
+        args, available_metrics=available_metrics, available_models=available_models
+    )
