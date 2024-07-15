@@ -44,7 +44,7 @@ def args_to_dict(args, prefix: str, strip_prefix: bool = False):
     prefix += "_"
     d = {}
     for k, v in args.__dict__.items():
-        if k.startswith(prefix) or k in ["language", "tokenize", "lowercase"]:
+        if k.startswith(prefix) or k in ["source_language", "tokenize", "lowercase"]:
             k = k.replace(prefix, "") if strip_prefix else k
             d[k] = v
     return d
@@ -338,11 +338,9 @@ def get_eval_args_given_task(
     )
     eval_args["gold_data_path"] = data_dir / task_name / subtask / "test.jsonl"
     # add language argument to eval_args as it is needed in some metrics
-    language = subtask.split(".")[1]
-    if "-" in language:
-        _, language = get_langs(language)
-    eval_args["language"] = language
-
+    lp = subtask.split(".")[1]
+    src_lang, trg_lang = get_langs(lp)
+    eval_args["lp"] = {"src_lang": src_lang, "trg_lang": trg_lang}
     return eval_args
 
 
@@ -433,13 +431,21 @@ def get_langs(lp):
     lang_pattern = "|".join(valid_langs)
     lp_pattern = rf"^({lang_pattern})-({lang_pattern})$"
     match = re.match(lp_pattern, lp)
-    src_lang = match.group(1)
-    trg_lang = match.group(2)
-    return src_lang, trg_lang
+    if match:
+        # We have a language pair, so both src_lang and trg_lang will be extracted from lp
+        src_lang = match.group(1)
+        trg_lang = match.group(2)
+        return src_lang, trg_lang
+    elif lp in valid_langs:
+        # the task is monolingual, hence we only have one language. So, we set the src_lang only. trg_lang will be set to None
+        src_lang = lp
+        trg_lang = None
+        return src_lang, trg_lang
+    return None, None
 
 
 def add_average_generation_time(
-    input_file: str, metadata_file: str, language: str, mode: str = "lps"
+    input_file: str, metadata_file: str, mode: str = "lps"
 ):
     """
     Given the generation file, the metadata file and the mode it calculates the time to generate the outputs.

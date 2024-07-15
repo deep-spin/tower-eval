@@ -25,7 +25,9 @@ class XCOMETQEXXL(Metric):
         self.model = load_from_checkpoint(model_path)
         self.model.eval()
 
-    def run(self, hypothesis_path, gold_data_path) -> dict:
+    def run(self, **kwargs) -> dict:
+        hypothesis_path = kwargs["hypothesis_path"]
+        gold_data_path = kwargs["gold_data_path"]
         hypotheses, gold_data = self._handle_inputs(hypothesis_path, gold_data_path)
         sources = gold_data["src"]
         result = self.evaluate(hypotheses, sources)

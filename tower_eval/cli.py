@@ -178,6 +178,7 @@ def run_evaluations(configs: dict, available_metrics: dict=available_metrics) ->
                     )
                     # make paths for source, hyp and ref, given task and subtask parameters
                     # different tasks have different source and reference file types
+                    # also, get the source and target languages from the subtask name (if applicable, otherwise they will be set to None)
                     eval_args = get_eval_args_given_task(
                         eval_args,
                         task_name,
@@ -189,8 +190,7 @@ def run_evaluations(configs: dict, available_metrics: dict=available_metrics) ->
                     )
                     metric_score = run_instantiated_metric(
                         metric=instantiated_metric,
-                        hypothesis_path=eval_args["hypothesis_path"],
-                        gold_data_path=eval_args["gold_data_path"],
+                        **eval_args
                     )
                     subtask_results.update(metric_score)
 
@@ -375,8 +375,7 @@ def command_selector(args, available_metrics=available_metrics, available_models
                 output_path = output_dir / "evaluation.json"
                 metric_scores = run_instantiated_metric(
                     metric=metric,
-                    hypothesis_path=generations_path,
-                    gold_data_path=raw_data_path,
+                    **eval_args
                 )
                 save_to_json(save_location=output_path, data=metric_scores)
     elif args.command == "index":

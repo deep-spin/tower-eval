@@ -4,7 +4,6 @@ import re
 from typing import List, Literal
 
 from loguru import logger
-from tqdm import tqdm
 
 from tower_eval.metrics.f1_sequence import conlleval
 from tower_eval.metrics.f1_sequence.result import F1SequenceResult
@@ -23,7 +22,6 @@ from tower_eval.utils import (
 class F1SEQUENCE(Metric):
     def __init__(
         self,
-        language: str,
         hypothesis_format: str = "xml",
         reference_format: str = "tsv",
         tokenize_hypothesis: bool = True,
@@ -33,7 +31,6 @@ class F1SEQUENCE(Metric):
         super().__init__(**kwargs)
         # Terminate if the length of hypothesis doesn't match the length of the reference?
         # Or simply trim/pad the hypothesis to make it the same length as the reference
-        self.language = kwargs.get("language", language)
         self.tokenize_hypothesis = kwargs.get(
             "tokenize_hypothesis", tokenize_hypothesis
         )
@@ -43,7 +40,10 @@ class F1SEQUENCE(Metric):
         # Having self.valid_ner_tags set to None means all tags produced by the model are acceptable.
         self.valid_ner_tags = kwargs.get("valid_ner_tags")
 
-    def run(self, hypothesis_path, gold_data_path) -> dict:
+    def run(self, **kwargs) -> dict:
+        hypothesis_path = kwargs["hypothesis_path"]
+        gold_data_path = kwargs["gold_data_path"]
+        self.language = kwargs["lp"]["src_lang"]
         hypothesis = self._load_samples(
             hypothesis_path,
             format=self.hypothesis_format,

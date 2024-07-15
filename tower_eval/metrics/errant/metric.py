@@ -14,27 +14,31 @@ class ERRANT(Metric):
         self, tokenize_source: bool = False, tokenize_hypothesis: bool = False, **kwargs
     ) -> None:
         super().__init__(**kwargs)
-        self.language = kwargs["language"]
-        self.references = kwargs["references_m2"]
         self.tokenize_source = kwargs.get("tokenize_source", tokenize_source)
         self.tokenize_hypothesis = kwargs.get(
             "tokenize_hypothesis", tokenize_hypothesis
         )
 
-    def run(self, hypothesis_path, gold_data_path) -> dict:
-        self.preprocess(hypothesis_path, gold_data_path)
-        result = self.evaluate()
+    def run(self, **kwargs) -> dict:
+        hypothesis_path = kwargs["hypothesis_path"]
+        gold_data_path_m2 = kwargs["references_m2"]
+        gold_data_path = kwargs["gold_data_path"]
+        language = kwargs["lp"]["src_lang"]
+        hypothesis_m2 = self.preprocess(hypothesis_path, gold_data_path, language=language)
+        result = self.evaluate(hypothesis_m2, gold_data_path_m2)
         result.print_result(self.metric_name())
         return result.format_result(self.metric_name())
 
     def evaluate(
         self,
+        hypothesis_m2, 
+        references
     ) -> ERRANTResult:
         """
         Evaluate function receives the source, hypothesis as well as the reference and returns an ERRANTResult object.
         """
         errant_score = subprocess.run(
-            ["errant_compare", "-hyp", self.hypothesis_m2, "-ref", self.references],
+            ["errant_compare", "-hyp", hypothesis_m2, "-ref", references],
             stderr=subprocess.PIPE,
             stdout=subprocess.PIPE,
             check=True,
@@ -50,17 +54,17 @@ class ERRANT(Metric):
         result = ERRANTResult(output_dict["F0.5"])
         return result
 
-    def preprocess(self, hypothesis_path, gold_data_path):
+    def preprocess(self, hypothesis_path, gold_data_path, language):
         hyp_lines, gold_data = self._handle_inputs(hypothesis_path, gold_data_path)
         src_lines = gold_data["src"]
 
         if self.tokenize_source:
-            src_tokenized = tokenize_spacy(src_lines, self.language)
+            src_tokenized = tokenize_spacy(src_lines, language)
         else:
             # assumes gold data already has tokenized sources
             src_tokenized = gold_data["tok_src"]
         if self.tokenize_hypothesis:
-            hyp_tokenized = tokenize_spacy(hyp_lines, self.language)
+            hyp_tokenized = tokenize_spacy(hyp_lines, language)
         else:
             hyp_tokenized = hyp_lines
 
@@ -88,7 +92,7 @@ class ERRANT(Metric):
                 ],
                 check=True,
             )
-            self.hypothesis_m2 = hyp_m2.name
+        return hyp_m2.name
 
     def process_result(self, result) -> MetricResult:
         pass

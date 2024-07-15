@@ -15,7 +15,9 @@ class BLEU(Metric):
         self.lowercase = kwargs.get("lowercase", lowercase)
         self.tokenizer = kwargs.get("tokenizer", tokenizer)
 
-    def run(self, hypothesis_path, gold_data_path) -> dict:
+    def run(self, **kwargs) -> dict:
+        hypothesis_path = kwargs["hypothesis_path"]
+        gold_data_path = kwargs["gold_data_path"]
         hypotheses, gold_data = self._handle_inputs(hypothesis_path, gold_data_path)
         references = gold_data["ref"]
         result = self.evaluate(
