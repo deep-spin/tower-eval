@@ -371,11 +371,12 @@ def command_selector(
             config_args = parse_yaml_config(args.config)
             scores = run_evaluations(config_args)
         else:
+            metric_scores = {}
             for metric in args.metrics:
                 eval_args = args.eval_args.get(metric, {})
                 metric = available_metrics[metric](**(eval_args))
                 logger.opt(colors=True).info(
-                    f"Running metric: <green> {metric} </green>"
+                    f"Running metric: <green> {metric.metric_name()} </green>"
                 )
                 assert (
                     len(args.output_paths)
@@ -385,10 +386,12 @@ def command_selector(
                 for output_path, raw_data_path, generations_path in zip(
                     args.output_paths, args.raw_data_paths, args.generations_paths
                 ):
-                    metric_scores = run_instantiated_metric(
-                        metric=metric,
-                        hypothesis_path=generations_path,
-                        gold_data_path=raw_data_path,
+                    metric_scores.update(
+                        run_instantiated_metric(
+                            metric=metric,
+                            hypothesis_path=generations_path,
+                            gold_data_path=raw_data_path,
+                        )
                     )
                     save_to_json(save_location=output_path, data=metric_scores)
     elif args.command == "index":
