@@ -393,8 +393,10 @@ def command_selector(
                             gold_data_path=raw_data_path,
                         )
                     )
-            for output_path, scores in paths_scores_correspondence.items():
-                save_to_json(save_location=output_path, data=scores)
+                    save_to_json(
+                        save_location=output_path,
+                        data=paths_scores_correspondence[output_path],
+                    )
     elif args.command == "index":
         if args.config:
             config_args = parse_yaml_config(args.config)
