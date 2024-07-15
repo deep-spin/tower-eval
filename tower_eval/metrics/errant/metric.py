@@ -19,10 +19,8 @@ class ERRANT(Metric):
             "tokenize_hypothesis", tokenize_hypothesis
         )
 
-    def run(self, **kwargs) -> dict:
-        hypothesis_path = kwargs["hypothesis_path"]
+    def run(self, hypothesis_path, gold_data_path, **kwargs) -> dict:
         gold_data_path_m2 = kwargs["references_m2"]
-        gold_data_path = kwargs["gold_data_path"]
         language = kwargs["lp"]["src_lang"]
         hypothesis_m2 = self.preprocess(hypothesis_path, gold_data_path, language=language)
         result = self.evaluate(hypothesis_m2, gold_data_path_m2)

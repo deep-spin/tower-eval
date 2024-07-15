@@ -12,7 +12,7 @@ class Metric(ABC):
     def __init__(self, **kwargs) -> None:
         self.kwargs = kwargs
 
-    def run(self, **kwargs):
+    def run(self, hypothesis_path, gold_data_path, **kwargs) -> dict:
         """
         The runner function that performs all the necessary checks on the files,
         applies the needed preprocessing (like lowercasing, tokenization, etc),

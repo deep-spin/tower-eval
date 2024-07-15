@@ -46,8 +46,7 @@ class Perplexity(Metric):
 
         return gold_data
 
-    def run(self, **kwargs) -> dict:
-        gold_data_path = kwargs["gold_data_path"]
+    def run(self, hypothesis_path, gold_data_path, **kwargs) -> dict:
         result = self.evaluate(gold_data_path, self.model_id, self.max_model_context)
         result.print_result(self.metric_name())
         return result.format_result(self.metric_name())

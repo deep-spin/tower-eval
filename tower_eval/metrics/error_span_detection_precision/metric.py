@@ -12,9 +12,7 @@ class ErrorSpanDetectionPrecision(ErrorSpanDetectionMetric):
             "severity_mismatch_penalty", severity_mismatch_penalty
         )
 
-    def run(self, **kwargs) -> dict:
-        hypothesis_path = kwargs["hypothesis_path"]
-        gold_data_path = kwargs["gold_data_path"]
+    def run(self, hypothesis_path, gold_data_path, **kwargs) -> dict:
         hypotheses, gold_data = self._handle_inputs(hypothesis_path, gold_data_path)
         reference_list = gold_data["ref"]
         result = ErrorSpanDetectionResult(

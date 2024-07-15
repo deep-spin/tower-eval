@@ -44,9 +44,7 @@ class ACCURACY(Metric):
         self.source_type = source_type
         self.source_labels = source_labels
 
-    def run(self, **kwargs) -> dict:
-        hypothesis_path = kwargs["hypothesis_path"]
-        gold_data_path = kwargs["gold_data_path"]
+    def run(self, hypothesis_path, gold_data_path, **kwargs) -> dict:
         hypotheses, gold_data = self._handle_inputs(hypothesis_path, gold_data_path)
         reference_lines = gold_data["ref"]
         gold_labels = []

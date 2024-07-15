@@ -26,9 +26,7 @@ class COMET(Metric):
         self.model = load_from_checkpoint(model_path)
         self.model.eval()
 
-    def run(self, **kwargs) -> dict:
-        hypothesis_path = kwargs["hypothesis_path"]
-        gold_data_path = kwargs["gold_data_path"]
+    def run(self, hypothesis_path, gold_data_path, **kwargs) -> dict:
         hypotheses, gold_data = self._handle_inputs(hypothesis_path, gold_data_path)
         references, sources = gold_data["ref"], gold_data["src"]
         result = self.evaluate(hypotheses, references, sources)

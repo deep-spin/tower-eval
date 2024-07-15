@@ -40,9 +40,7 @@ class F1SEQUENCE(Metric):
         # Having self.valid_ner_tags set to None means all tags produced by the model are acceptable.
         self.valid_ner_tags = kwargs.get("valid_ner_tags")
 
-    def run(self, **kwargs) -> dict:
-        hypothesis_path = kwargs["hypothesis_path"]
-        gold_data_path = kwargs["gold_data_path"]
+    def run(self, hypothesis_path, gold_data_path, **kwargs) -> dict:
         self.language = kwargs["lp"]["src_lang"]
         hypothesis = self._load_samples(
             hypothesis_path,

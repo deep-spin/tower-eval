@@ -21,9 +21,7 @@ class TER(Metric):
         self.asian_support = kwargs.get("asian_support", asian_support)
         self.case_sensitive = kwargs.get("case_sensitive", case_sensitive)
 
-    def run(self, **kwargs) -> dict:
-        hypothesis_path = kwargs["hypothesis_path"]
-        gold_data_path = kwargs["gold_data_path"]
+    def run(self, hypothesis_path, gold_data_path, **kwargs) -> dict:
         hypotheses, gold_data = self._handle_inputs(hypothesis_path, gold_data_path)
         references = gold_data["ref"]
         result = self.evaluate(hypotheses, references)

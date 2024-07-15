@@ -328,7 +328,7 @@ def get_eval_args_given_task(
     if task_name == "gec":
         eval_args["references_m2"] = data_dir / task_name / subtask / "test_corpus.m2"
     generations_dir = Path(str(output_dir).replace("evaluations", "generations"))
-    eval_args["hypothesis_path"] = (
+    hypothesis_path = (
         generations_dir
         / task_name
         / subtask
@@ -336,12 +336,12 @@ def get_eval_args_given_task(
         / model_name
         / "generation.txt"
     )
-    eval_args["gold_data_path"] = data_dir / task_name / subtask / "test.jsonl"
+    gold_data_path = data_dir / task_name / subtask / "test.jsonl"
     # add language argument to eval_args as it is needed in some metrics
     lp = subtask.split(".")[1]
     src_lang, trg_lang = get_langs(lp)
     eval_args["lp"] = {"src_lang": src_lang, "trg_lang": trg_lang}
-    return eval_args
+    return hypothesis_path, gold_data_path, eval_args
 
 
 def text_to_label(
