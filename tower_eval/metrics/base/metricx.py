@@ -33,18 +33,21 @@ class BaseMetricX(Metric):
         self.model.to(self.device)
         self.model.eval()
 
-    def load_gold_data(self, gold_data):
+    @staticmethod
+    def load_gold_data(gold_data):
         pass
 
+    @staticmethod
     def make_samples(
-        self, sources: list[str], hypotheses: list[str], references: list[str] = None
+        sources: list[str], hypotheses: list[str], references: list[str] = None
     ):
         pass
 
+    @staticmethod
     def _make_input(example):
         pass
 
-    def run(self, hypothesis_path, gold_data_path) -> dict:
+    def run(self, hypothesis_path, gold_data_path, **kwargs) -> dict:
         hypotheses, gold_data = self._handle_inputs(hypothesis_path, gold_data_path)
         references, sources = self.load_gold_data(gold_data)
         result = self.evaluate(sources, hypotheses, references)
@@ -111,18 +114,21 @@ class RefMetricX(BaseMetricX):
     def __init__(self, tokenizer: str, model: str, **kwargs) -> None:
         super().__init__(model=model, tokenizer=tokenizer, **kwargs)
 
-    def load_gold_data(self, gold_data):
+    @staticmethod
+    def load_gold_data(gold_data):
         references, sources = gold_data["ref"], None
 
         return references, sources
 
+    @staticmethod
     def make_samples(
-        self, hypotheses: list[str], references: list[str], sources: list[str] = None
+        hypotheses: list[str], references: list[str], sources: list[str] = None
     ):
         return [
             {"hypothesis": h, "reference": r} for h, r in zip(hypotheses, references)
         ]
 
+    @staticmethod
     def _make_input(example):
         example["input"] = (
             "candidate: "
@@ -137,16 +143,19 @@ class QEMetricX(BaseMetricX):
     def __init__(self, tokenizer: str, model: str, **kwargs) -> None:
         super().__init__(model=model, tokenizer=tokenizer, **kwargs)
 
-    def load_gold_data(self, gold_data):
+    @staticmethod
+    def load_gold_data(gold_data):
         references, sources = None, gold_data["src"]
 
         return references, sources
 
+    @staticmethod
     def make_samples(
-        self, sources: list[str], hypotheses: list[str], references: list[str] = None
+        sources: list[str], hypotheses: list[str], references: list[str] = None
     ):
         return [{"hypothesis": h, "source": s} for h, s in zip(hypotheses, sources)]
 
+    @staticmethod
     def _make_input(example):
         example["input"] = (
             "candidate: " + example["hypothesis"] + " source: " + example["source"]

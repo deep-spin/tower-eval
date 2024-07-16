@@ -18,6 +18,7 @@ class ErrorSpanDetectionMetric(Metric):
         gold_data_path,
         severity_mismatch_penalty: float = 0.5,
         hyp_type: str = "jsonl",
+        **kwargs,
     ) -> dict:
         hypotheses, gold_data = self._handle_inputs(
             hypothesis_path, gold_data_path, hyp_type=hyp_type

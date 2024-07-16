@@ -10,7 +10,7 @@ class SPEARMAN(Metric):
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
 
-    def run(self, hypothesis_path, gold_data_path) -> dict:
+    def run(self, hypothesis_path, gold_data_path, **kwargs) -> dict:
         predicted_scores, gold_data = self._handle_inputs(
             hypothesis_path, gold_data_path
         )

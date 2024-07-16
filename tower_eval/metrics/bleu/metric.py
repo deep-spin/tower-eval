@@ -17,6 +17,7 @@ class BLEU(Metric):
         gold_data_path,
         lowercase: bool = False,
         tokenizer: str = None,
+        **kwargs
     ) -> dict:
         hypotheses, gold_data = self._handle_inputs(hypothesis_path, gold_data_path)
         references = gold_data["ref"]

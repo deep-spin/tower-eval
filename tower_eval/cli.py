@@ -164,19 +164,21 @@ def run_evaluations(configs: dict, available_metrics: dict = available_metrics) 
                     )
                     # make paths for source, hyp and ref, given task and subtask parameters
                     # different tasks have different source and reference file types
-                    eval_args = get_eval_args_given_task(
-                        eval_args,
-                        task_name,
-                        data_dir,
-                        subtask,
-                        output_dir,
-                        model_type,
-                        model_name,
+                    hypothesis_path, gold_data_path, eval_args = (
+                        get_eval_args_given_task(
+                            eval_args,
+                            task_name,
+                            data_dir,
+                            subtask,
+                            output_dir,
+                            model_type,
+                            model_name,
+                        )
                     )
                     metric_score = run_instantiated_metric(
                         metric=instantiated_metric,
-                        hypothesis_path=eval_args["hypothesis_path"],
-                        gold_data_path=eval_args["gold_data_path"],
+                        hypothesis_path=hypothesis_path,
+                        gold_data_path=gold_data_path,
                         eval_args=eval_args,
                     )
                     subtask_results.update(metric_score)

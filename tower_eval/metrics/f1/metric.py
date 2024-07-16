@@ -36,6 +36,7 @@ class F1(Metric):
         gold_data_path,
         source_type: str = "categorical",
         source_labels: List[str] = None,
+        **kwargs,
     ) -> dict:
         hypotheses, gold_data = self._handle_inputs(hypothesis_path, gold_data_path)
         reference_lines = gold_data["ref"]

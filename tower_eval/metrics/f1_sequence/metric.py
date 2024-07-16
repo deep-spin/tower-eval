@@ -31,12 +31,12 @@ class F1SEQUENCE(Metric):
         self,
         hypothesis_path,
         gold_data_path,
-        language: str,
         hypothesis_format: str = "xlm",
         reference_format: str = "tsv",
         tokenize_hypothesis: bool = True,
         default_noent_tag: str = "O",
         valid_ner_tags: list[str] = None,
+        **kwargs,
     ) -> dict:
         hypothesis = self._load_samples(
             hypothesis_path,

@@ -33,7 +33,12 @@ class BaseCOMET(Metric):
         pass
 
     def run(
-        self, hypothesis_path, gold_data_path, gpus: int = 1, batch_size: int = 16
+        self,
+        hypothesis_path,
+        gold_data_path,
+        gpus: int = 1,
+        batch_size: int = 16,
+        **kwargs
     ) -> dict:
         hypotheses, gold_data = self._handle_inputs(hypothesis_path, gold_data_path)
         references, sources = self.load_gold_data(gold_data)

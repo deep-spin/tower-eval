@@ -21,6 +21,7 @@ class ERRANT(Metric):
         language: str,
         tokenize_source: bool = False,
         tokenize_hypothesis: bool = False,
+        **kwargs
     ) -> dict:
         hypothesis_m2 = self.preprocess(hypothesis_path, gold_data_path, language)
         result = self.evaluate(

@@ -50,6 +50,7 @@ class Perplexity(Metric):
             "tensor_parallel_size": 1,
             "trust_remote_code": True,
         },
+        **kwargs,
     ) -> dict:
         result = self.evaluate(gold_data_path, model_id, max_model_context, vllm_args)
         result.print_result(self.metric_name())

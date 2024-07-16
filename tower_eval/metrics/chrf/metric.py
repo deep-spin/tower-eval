@@ -12,10 +12,7 @@ class CHRF(Metric):
         super().__init__(**kwargs)
 
     def run(
-        self,
-        hypothesis_path,
-        gold_data_path,
-        lowercase: bool = False,
+        self, hypothesis_path, gold_data_path, lowercase: bool = False, **kwargs
     ) -> dict:
         hypotheses, gold_data = self._handle_inputs(hypothesis_path, gold_data_path)
         references = gold_data["ref"]

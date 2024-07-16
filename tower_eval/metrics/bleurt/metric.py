@@ -23,7 +23,9 @@ class BLEURT(Metric):
         self.model.eval()
         self.model = self.model.to("cuda")
 
-    def run(self, hypothesis_path, gold_data_path, batch_size: int = 16) -> dict:
+    def run(
+        self, hypothesis_path, gold_data_path, batch_size: int = 16, **kwargs
+    ) -> dict:
         hypotheses, gold_data = self._handle_inputs(hypothesis_path, gold_data_path)
         references = gold_data["ref"]
         result = self.evaluate(hypotheses, references, batch_size)

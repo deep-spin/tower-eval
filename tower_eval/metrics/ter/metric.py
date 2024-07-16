@@ -18,6 +18,7 @@ class TER(Metric):
         no_punct: bool = False,
         asian_support: bool = False,
         case_sensitive: bool = False,
+        **kwargs
     ) -> dict:
         hypotheses, gold_data = self._handle_inputs(hypothesis_path, gold_data_path)
         references = gold_data["ref"]
