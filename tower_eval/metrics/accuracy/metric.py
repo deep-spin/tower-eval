@@ -5,17 +5,14 @@ from loguru import logger
 from sklearn.metrics import accuracy_score
 
 from tower_eval.metrics.accuracy.result import AccuracyResult
-from tower_eval.metrics.metrics_handler import Metric
-from tower_eval.metrics.result_handler import MetricResult
-from tower_eval.utils import read_lines, text_to_label
+from tower_eval.metrics.base.metrics_handler import Metric
+from tower_eval.metrics.base.result_handler import MetricResult
+from tower_eval.utils import text_to_label
 
 
 class ACCURACY(Metric):
     def __init__(
         self,
-        source_type: str,
-        source_labels: List[str] = None,
-        reference_col: str = "answer",
         **kwargs,
     ) -> None:
         """Initializes an instance of the Accuracy metric.
@@ -32,17 +29,6 @@ class ACCURACY(Metric):
             None
         """
         super().__init__(**kwargs)
-        assert (
-            len(self.references) == 1
-        ), "ERROR: multiple references are not supported for Accuracy."
-        assert (
-            source_labels is not None if source_type == "text" else True
-        ), "ERROR: source_labels must be provided if source_type is text."
-
-        # This is because multiple references are not supported for Accuracy.
-        self.reference_col = reference_col
-        self.source_type = source_type
-        self.source_labels = source_labels
 
     def run(self, hypothesis_path, gold_data_path) -> dict:
         hypotheses, gold_data = self._handle_inputs(hypothesis_path, gold_data_path)

@@ -5,18 +5,11 @@ from pathlib import Path
 from typing import List
 
 import numpy as np
-import vllm
-from loguru import logger
 
-from tower_eval.metrics.metrics_handler import Metric
+from tower_eval.metrics.base.metrics_handler import Metric
+from tower_eval.metrics.base.result_handler import MetricResult
 from tower_eval.metrics.perplexity.result import PerplexityResult
-from tower_eval.metrics.result_handler import MetricResult
-from tower_eval.utils import (
-    handle_subprocess,
-    list_to_dict,
-    load_jsonl_file,
-    tokenize_text,
-)
+from tower_eval.utils import handle_subprocess, list_to_dict, load_jsonl_file
 
 
 class Perplexity(Metric):
@@ -46,13 +39,28 @@ class Perplexity(Metric):
 
         return gold_data
 
-    def run(self, hypothesis_path=None, gold_data_path=None) -> dict:
-        result = self.evaluate(gold_data_path, self.model_id, self.max_model_context)
+    def run(
+        self,
+        gold_data_path,
+        model_id: str,
+        max_model_context: int,
+        hypothesis_path=None,
+        vllm_args: dict = {
+            "gpu_memory_utilization": 0.9,
+            "tensor_parallel_size": 1,
+            "trust_remote_code": True,
+        },
+    ) -> dict:
+        result = self.evaluate(gold_data_path, model_id, max_model_context, vllm_args)
         result.print_result(self.metric_name())
         return result.format_result(self.metric_name())
 
     def evaluate(
-        self, gold_data_path: Path, model_id: str, max_model_context: int
+        self,
+        gold_data_path: Path,
+        model_id: str,
+        max_model_context: int,
+        vllm_args: dict,
     ) -> PerplexityResult:
         """
         Evaluate function receives the hypotheses and the references and returns a COMETResult object.

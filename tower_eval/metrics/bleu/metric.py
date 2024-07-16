@@ -1,25 +1,27 @@
 # -*- coding: utf-8 -*-
 from sacrebleu.metrics import BLEU as SacreBLEU
 
+from tower_eval.metrics.base.metrics_handler import Metric
+from tower_eval.metrics.base.result_handler import MetricResult
 from tower_eval.metrics.bleu.result import BLEUResult
-from tower_eval.metrics.metrics_handler import Metric
-from tower_eval.metrics.result_handler import MetricResult
 from tower_eval.utils import get_sacrebleu_segment_scores
 
 
 class BLEU(Metric):
-    def __init__(
-        self, lowercase: bool = False, tokenizer: str = None, **kwargs
-    ) -> None:
+    def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
-        self.lowercase = kwargs.get("lowercase", lowercase)
-        self.tokenizer = kwargs.get("tokenizer", tokenizer)
 
-    def run(self, hypothesis_path, gold_data_path) -> dict:
+    def run(
+        self,
+        hypothesis_path,
+        gold_data_path,
+        lowercase: bool = False,
+        tokenizer: str = None,
+    ) -> dict:
         hypotheses, gold_data = self._handle_inputs(hypothesis_path, gold_data_path)
         references = gold_data["ref"]
         result = self.evaluate(
-            hypotheses, references, lowercase=self.lowercase, tokenize=self.tokenizer
+            hypotheses, references, lowercase=lowercase, tokenize=tokenizer
         )
         result.print_result(self.metric_name())
         return result.format_result(self.metric_name())

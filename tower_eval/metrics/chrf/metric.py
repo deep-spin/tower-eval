@@ -1,21 +1,25 @@
 # -*- coding: utf-8 -*-
 from sacrebleu.metrics import CHRF as SacreCHRF
 
+from tower_eval.metrics.base.metrics_handler import Metric
+from tower_eval.metrics.base.result_handler import MetricResult
 from tower_eval.metrics.chrf.result import CHRFResult
-from tower_eval.metrics.metrics_handler import Metric
-from tower_eval.metrics.result_handler import MetricResult
 from tower_eval.utils import get_sacrebleu_segment_scores
 
 
 class CHRF(Metric):
-    def __init__(self, lowercase: bool = False, **kwargs) -> None:
+    def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
-        self.lowercase = kwargs.get("lowercase", lowercase)
 
-    def run(self, hypothesis_path, gold_data_path) -> dict:
+    def run(
+        self,
+        hypothesis_path,
+        gold_data_path,
+        lowercase: bool = False,
+    ) -> dict:
         hypotheses, gold_data = self._handle_inputs(hypothesis_path, gold_data_path)
         references = gold_data["ref"]
-        result = self.evaluate(hypotheses, references, lowercase=self.lowercase)
+        result = self.evaluate(hypotheses, references, lowercase=lowercase)
         result.print_result(self.metric_name())
         return result.format_result(self.metric_name())
 

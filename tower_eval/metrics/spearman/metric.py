@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 from scipy.stats import spearmanr
-from tqdm import tqdm
 
-from tower_eval.metrics.metrics_handler import Metric
-from tower_eval.metrics.result_handler import MetricResult
+from tower_eval.metrics.base.metrics_handler import Metric
+from tower_eval.metrics.base.result_handler import MetricResult
 from tower_eval.metrics.spearman.result import SpearmanResult
 
 

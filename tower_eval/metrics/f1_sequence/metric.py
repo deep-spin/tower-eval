@@ -6,10 +6,10 @@ from typing import List, Literal
 from loguru import logger
 from tqdm import tqdm
 
+from tower_eval.metrics.base.metrics_handler import Metric
+from tower_eval.metrics.base.result_handler import MetricResult
 from tower_eval.metrics.f1_sequence import conlleval
 from tower_eval.metrics.f1_sequence.result import F1SequenceResult
-from tower_eval.metrics.metrics_handler import Metric
-from tower_eval.metrics.result_handler import MetricResult
 from tower_eval.utils import (
     PATTERN_CLOSE_TAG,
     PATTERN_OPEN_TAG,
@@ -23,62 +23,57 @@ from tower_eval.utils import (
 class F1SEQUENCE(Metric):
     def __init__(
         self,
-        language: str,
-        hypothesis_format: str = "xml",
-        reference_format: str = "tsv",
-        tokenize_hypothesis: bool = True,
-        default_noent_tag: str = "O",
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
-        # Terminate if the length of hypothesis doesn't match the length of the reference?
-        # Or simply trim/pad the hypothesis to make it the same length as the reference
-        self.language = kwargs.get("language", language)
-        self.tokenize_hypothesis = kwargs.get(
-            "tokenize_hypothesis", tokenize_hypothesis
-        )
-        self.hypothesis_format = kwargs.get("hypothesis_format", hypothesis_format)
-        self.reference_format = kwargs.get("reference_format", reference_format)
-        self.default_noent_tag = kwargs.get("default_noent_tag", default_noent_tag)
-        # Having self.valid_ner_tags set to None means all tags produced by the model are acceptable.
-        self.valid_ner_tags = kwargs.get("valid_ner_tags")
 
-    def run(self, hypothesis_path, gold_data_path) -> dict:
+    def run(
+        self,
+        hypothesis_path,
+        gold_data_path,
+        language: str,
+        hypothesis_format: str = "xlm",
+        reference_format: str = "tsv",
+        tokenize_hypothesis: bool = True,
+        default_noent_tag: str = "O",
+        valid_ner_tags: list[str] = None,
+    ) -> dict:
         hypothesis = self._load_samples(
             hypothesis_path,
-            format=self.hypothesis_format,
-            tokenize=self.tokenize_hypothesis,
+            format=hypothesis_format,
+            tokenize=tokenize_hypothesis,
         )
-        hypothesis = self.filter_tags(
-            hypothesis, self.valid_ner_tags, self.default_noent_tag
-        )
+        hypothesis = self.filter_tags(hypothesis, valid_ner_tags, default_noent_tag)
         reference = self._load_samples(
-            gold_data_path, format=self.reference_format, tokenize=False
+            gold_data_path, format=reference_format, tokenize=False
         )
-        reference = self.filter_tags(
-            reference, self.valid_ner_tags, self.default_noent_tag
-        )
+        reference = self.filter_tags(reference, valid_ner_tags, default_noent_tag)
 
-        result = self.evaluate(hypothesis=hypothesis, reference=reference)
+        result = self.evaluate(
+            hypothesis=hypothesis,
+            reference=reference,
+            default_noent_tag=default_noent_tag,
+            valid_ner_tags=valid_ner_tags,
+        )
         result.print_result(self.metric_name())
         return result.format_result(self.metric_name())
 
     def evaluate(
-        self, hypothesis: List[List[str]], reference: List[List[str]]
+        self,
+        hypothesis: List[List[str]],
+        reference: List[List[str]],
+        default_noent_tag: str,
+        valid_ner_tags: list[str],
     ) -> F1SequenceResult:
         # evaluate by tag
         f1s_by_tag = {}
         for tag in self.valid_ner_tags:
-            filtered_hypothesis = self.filter_tags(
-                hypothesis, tag, self.default_noent_tag
-            )
-            filtered_reference = self.filter_tags(
-                reference, tag, self.default_noent_tag
-            )
+            filtered_hypothesis = self.filter_tags(hypothesis, tag, default_noent_tag)
+            filtered_reference = self.filter_tags(reference, tag, default_noent_tag)
             true_seqs, pred_seqs = align_hyp_ref(
                 gold_labels=filtered_reference,
                 predicted_labels=filtered_hypothesis,
-                noent_tag=self.default_noent_tag,
+                noent_tag=default_noent_tag,
             )
             _, _, f1s_by_tag[tag] = conlleval.evaluate(
                 true_seqs=true_seqs, pred_seqs=pred_seqs
@@ -89,14 +84,14 @@ class F1SEQUENCE(Metric):
         true_seqs, pred_seqs = align_hyp_ref(
             gold_labels=reference,
             predicted_labels=hypothesis,
-            noent_tag=self.default_noent_tag,
+            noent_tag=default_noent_tag,
         )
 
         precision, recall, global_f1 = conlleval.evaluate(
             true_seqs=true_seqs, pred_seqs=pred_seqs, verbose=False
         )
         result = F1SequenceResult(
-            result=global_f1, tags_f1=f1s_by_tag, valid_tags=self.valid_ner_tags
+            result=global_f1, tags_f1=f1s_by_tag, valid_tags=valid_ner_tags
         )
         return result
 

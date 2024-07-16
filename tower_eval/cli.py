@@ -123,8 +123,7 @@ def run_evaluations(configs: dict, available_metrics: dict = available_metrics) 
             # Use empty dictionary if the arguments is None.
             # This is done to be able to use update function later on.
             task_metric_args = {} if task_metric_args is None else task_metric_args
-            instantiated_metric = available_metrics[task_metric](**task_metric_args)
-            reinstantiate_metric = False
+            instantiated_metric = available_metrics[task_metric]()
             for model in configs.get("models"):
                 model_type = model["type"]
                 model_name = model["name"]
@@ -158,20 +157,7 @@ def run_evaluations(configs: dict, available_metrics: dict = available_metrics) 
                     eval_args = combine_metrics_args(
                         task_metric_args, subtask_metric_args
                     )
-                    if reinstantiate_metric and not subtask_metric_args:
-                        logger.info(f"Reinsantiating metric to reset task args.")
-                        instantiated_metric = available_metrics[task_metric](
-                            **eval_args
-                        )
-                        reinstantiate_metric = False
-                    if subtask_metric_args:
-                        reinstantiate_metric = True
-                        logger.info(
-                            f"Reinsantiating metric given new args for subtask."
-                        )
-                        instantiated_metric = available_metrics[task_metric](
-                            **eval_args
-                        )
+
                     subtask_metrics[task_metric] = eval_args
                     eval_args.update(
                         {k: v for (k, v) in subtask_args.items() if k != "metrics"}
@@ -191,6 +177,7 @@ def run_evaluations(configs: dict, available_metrics: dict = available_metrics) 
                         metric=instantiated_metric,
                         hypothesis_path=eval_args["hypothesis_path"],
                         gold_data_path=eval_args["gold_data_path"],
+                        eval_args=eval_args,
                     )
                     subtask_results.update(metric_score)
 
@@ -391,6 +378,7 @@ def command_selector(
                             metric=metric,
                             hypothesis_path=generations_path,
                             gold_data_path=raw_data_path,
+                            eval_args=eval_args,
                         )
                     )
                     save_to_json(

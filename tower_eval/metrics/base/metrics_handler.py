@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from tower_eval.metrics.result_handler import MetricResult
+from tower_eval.metrics.base.result_handler import MetricResult
 from tower_eval.utils import list_to_dict, load_jsonl_file, read_lines
 
 
