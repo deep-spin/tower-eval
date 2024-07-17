@@ -2,25 +2,44 @@
 from pathlib import Path
 
 from tower_eval.error_span_utils import det_to_annotation, tag_to_annotation
-from tower_eval.metrics.metrics_handler import Metric
-from tower_eval.metrics.result_handler import MetricResult
+from tower_eval.metrics.base.metrics_handler import Metric
+from tower_eval.metrics.base.result_handler import MetricResult
 from tower_eval.utils import load_jsonl_file, read_lines
 
 
 class ErrorSpanDetectionMetric(Metric):
-    def __init__(self, **kwargs) -> None:
+    def __init__(self, key, **kwargs) -> None:
         super().__init__(**kwargs)
-        self.severity_mismatch_penalty = (
-            kwargs["severity_mismatch_penalty"]
-            if "severity_mismatch_penalty" in kwargs
-            else 0.5
+        self.key = key
+
+    def run(
+        self,
+        hypothesis_path,
+        gold_data_path,
+        severity_mismatch_penalty: float = 0.5,
+        hyp_type: str = "jsonl",
+        **kwargs,
+    ) -> dict:
+        hypotheses, gold_data = self._handle_inputs(
+            hypothesis_path, gold_data_path, hyp_type=hyp_type
         )
-        self.hyp_type = kwargs["hyp_type"] if "hyp_type" in kwargs else "jsonl"
+        reference_list = gold_data["ref"]
+        result = ErrorSpanDetectionResult(
+            self.evaluate(
+                hypotheses,
+                reference_list,
+                severity_mismatch_penalty,
+            )[self.key]
+        )
+        result.print_result(self.metric_name())
+
+        return result.format_result(self.metric_name())
 
     def evaluate(
         self,
         hypotheses: list,
         references: list,
+        severity_mismatch_penalty: float = 0.5,
     ) -> dict:
         """
         Computes the Error Span Detection metric.
@@ -60,12 +79,12 @@ class ErrorSpanDetectionMetric(Metric):
                         if character_sys_major > 0:
                             tp += 1
                         elif character_sys_minor > 0:
-                            tp += self.severity_mismatch_penalty
+                            tp += severity_mismatch_penalty
                     elif character_gold_minor > 0 and character_gold_major == 0:
                         if character_sys_minor > 0:
                             tp += 1
                         elif character_sys_major > 0:
-                            tp += self.severity_mismatch_penalty
+                            tp += severity_mismatch_penalty
                     elif character_gold_minor > 0 and character_gold_major > 0:
                         if character_sys_minor > 0 or character_sys_major > 0:
                             tp += 1
@@ -123,6 +142,7 @@ class ErrorSpanDetectionMetric(Metric):
         self,
         hypotheses: Path,
         references: Path,
+        hyp_type: str,
     ) -> tuple:
         """
         Function to handle input files.
@@ -139,15 +159,15 @@ class ErrorSpanDetectionMetric(Metric):
         references_list = load_jsonl_file(references)
         mts = [ref["mt"] for ref in references_list]
         # if handling existing jsonl file
-        if self.hyp_type == "jsonl":
+        if hyp_type == "jsonl":
             hypotheses_list_no_mt = load_jsonl_file(hypotheses)
             for i, mt in enumerate(mts):
                 hypotheses_list_no_mt[i].update({"mt": mt})
                 hypotheses_list.append(hypotheses_list_no_mt[i])
         # if handling model generations
-        elif self.hyp_type in ["tag", "det"]:
+        elif hyp_type in ["tag", "det"]:
             generations = read_lines(hypotheses, unescape_newline=True)
-            hypotheses_list = self.parse_generations(generations, mts, self.hyp_type)
+            hypotheses_list = self.parse_generations(generations, mts, hyp_type)
 
         assert len(hypotheses) == len(
             references_list

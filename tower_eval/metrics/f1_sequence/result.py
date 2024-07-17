@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from typing import Dict, List, Union
 
-from tower_eval.metrics.result_handler import MetricResult
+from tower_eval.metrics.base.result_handler import MetricResult
 
 
 class F1SequenceResult(MetricResult):

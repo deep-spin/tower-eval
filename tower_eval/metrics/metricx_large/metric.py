@@ -2,12 +2,12 @@
 from tower_eval.metrics.base.metricx import RefMetricX
 
 
-class MetricX(RefMetricX):
+class MetricXLarge(RefMetricX):
     def __init__(self, **kwargs) -> None:
         super().__init__(
-            model="google/metricx-23-xl-v2p0", tokenizer="google/mt5-xl", **kwargs
+            model="google/metricx-23-large-v2p0", tokenizer="google/mt5-large", **kwargs
         )
 
     @staticmethod
     def metric_name():
-        return "metricx"
+        return "metricx_large"

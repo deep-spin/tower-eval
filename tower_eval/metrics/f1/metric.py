@@ -4,18 +4,15 @@ from typing import List
 from loguru import logger
 from sklearn.metrics import f1_score
 
+from tower_eval.metrics.base.metrics_handler import Metric
+from tower_eval.metrics.base.result_handler import MetricResult
 from tower_eval.metrics.f1.result import F1Result
-from tower_eval.metrics.metrics_handler import Metric
-from tower_eval.metrics.result_handler import MetricResult
 from tower_eval.utils import text_to_label
 
 
 class F1(Metric):
     def __init__(
         self,
-        source_type: str,
-        source_labels: List[str] = None,
-        reference_col: str = "answer",
         **kwargs,
     ) -> None:
         """Initializes an instance of the f1 metric.
@@ -32,19 +29,15 @@ class F1(Metric):
             None
         """
         super().__init__(**kwargs)
-        assert (
-            len(self.references) == 1
-        ), "ERROR: multiple references are not supported for f1."
-        assert (
-            source_labels is not None if source_type == "text" else True
-        ), "ERROR: source_labels must be provided if source_type is text."
 
-        # This is because multiple references are not supported for f1.
-        self.reference_col = reference_col
-        self.source_type = source_type
-        self.source_labels = source_labels
-
-    def run(self, hypothesis_path, gold_data_path) -> dict:
+    def run(
+        self,
+        hypothesis_path,
+        gold_data_path,
+        source_type: str = "categorical",
+        source_labels: List[str] = None,
+        **kwargs,
+    ) -> dict:
         hypotheses, gold_data = self._handle_inputs(hypothesis_path, gold_data_path)
         reference_lines = gold_data["ref"]
         gold_labels = []
@@ -56,8 +49,8 @@ class F1(Metric):
             gold_labels.append(text_to_label(ref_line, "categorical"))
             label, is_random = text_to_label(
                 hyp_line,
-                self.source_type,
-                self.source_labels,
+                source_type,
+                source_labels,
                 return_is_random=True,
             )
             is_random_count += 1 if is_random else 0

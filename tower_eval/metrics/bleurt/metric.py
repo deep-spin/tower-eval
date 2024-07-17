@@ -7,15 +7,14 @@ from bleurt_pytorch import (
 )
 from tqdm import tqdm
 
+from tower_eval.metrics.base.metrics_handler import Metric
+from tower_eval.metrics.base.result_handler import MetricResult
 from tower_eval.metrics.bleurt.result import BLEURTResult
-from tower_eval.metrics.metrics_handler import Metric
-from tower_eval.metrics.result_handler import MetricResult
 
 
 class BLEURT(Metric):
-    def __init__(self, batch_size: int = 16, **kwargs) -> None:
+    def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
-        self.batch_size = kwargs.get("batch_size", batch_size)
         self.config = BleurtConfig.from_pretrained("lucadiliello/BLEURT-20")
         self.model = BleurtForSequenceClassification.from_pretrained(
             "lucadiliello/BLEURT-20"
@@ -24,14 +23,18 @@ class BLEURT(Metric):
         self.model.eval()
         self.model = self.model.to("cuda")
 
-    def run(self, hypothesis_path, gold_data_path) -> dict:
+    def run(
+        self, hypothesis_path, gold_data_path, batch_size: int = 16, **kwargs
+    ) -> dict:
         hypotheses, gold_data = self._handle_inputs(hypothesis_path, gold_data_path)
         references = gold_data["ref"]
-        result = self.evaluate(hypotheses, references)
+        result = self.evaluate(hypotheses, references, batch_size)
         result.print_result(self.metric_name())
         return result.format_result(self.metric_name())
 
-    def evaluate(self, hypotheses: list, references: list) -> BLEURTResult:
+    def evaluate(
+        self, hypotheses: list, references: list, batch_size: int
+    ) -> BLEURTResult:
         """
         Evaluate function receives the hypotheses and the references and returns a COMETResult object.
 
@@ -40,10 +43,10 @@ class BLEURT(Metric):
         :param sources: List of source sentences
         """
         segments_scores = []
-        for i in tqdm(range(0, len(references), self.batch_size)):
+        for i in tqdm(range(0, len(references), batch_size)):
             with torch.no_grad():
-                batch_references = references[i : i + self.batch_size]
-                batch_hypotheses = hypotheses[i : i + self.batch_size]
+                batch_references = references[i : i + batch_size]
+                batch_hypotheses = hypotheses[i : i + batch_size]
                 inputs = self.tokenizer(
                     batch_references,
                     batch_hypotheses,

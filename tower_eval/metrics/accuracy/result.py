@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from tower_eval.metrics.result_handler import MetricResult
+from tower_eval.metrics.base.result_handler import MetricResult
 
 
 class AccuracyResult(MetricResult):
