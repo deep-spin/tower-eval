@@ -56,7 +56,7 @@ class Seq2Seq(Generator):
         """
         # NLLB requires that source language be passed to the tokenizer and the target language be passed to the model
         if self.model_family == "nllb":
-            self.tokenizer.src_lang = self.source_language
+            self.tokenizer.src_lang = NLLB_LANGUAGE_CODES[self.source_language]
         inputs = self.tokenizer(input_lines, return_tensors="pt", padding=True).to(
             "cuda"
         )
