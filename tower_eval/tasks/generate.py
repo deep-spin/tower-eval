@@ -79,12 +79,11 @@ def generate(i: int, config_path: str, config_type: str, available_models: dict=
                 f"Running inference for task: <yellow> {task_name} </yellow>, subtask: <green> {subtask} </green> with model: <red> {model_type}/{model_name} </red> saving to: <red> {output_dir} </red>"
             )
 
-            if task_name in ["mt", "ape"]:
-                lp = subtask.split(".")[-1]
-                src_lang, tgt_lang = get_langs(lp)
+            lp = subtask.split(".")[-1]
+            src_lang, tgt_lang = get_langs(lp)
 
-                model.source_language = src_lang
-                model.target_language = tgt_lang
+            model.source_language = src_lang
+            model.target_language = tgt_lang
             model.generation_with_resume(
                 input_file=input_file,
                 output_file=output_file,
