@@ -22,7 +22,6 @@ from loguru import logger
 
 from tower_eval.metrics import available_metrics
 from tower_eval.models import available_models
-from tower_eval.tasks.evaluate import run_instantiated_metric
 from tower_eval.tasks.generate import generate, simple_generate
 from tower_eval.tasks.index import index_data
 from tower_eval.tasks.prepare import prepare_data
@@ -175,11 +174,10 @@ def run_evaluations(configs: dict, available_metrics: dict = available_metrics) 
                             model_name,
                         )
                     )
-                    metric_score = run_instantiated_metric(
-                        metric=instantiated_metric,
+                    metric_score = instantiated_metric.run(
                         hypothesis_path=hypothesis_path,
                         gold_data_path=gold_data_path,
-                        eval_args=eval_args,
+                        **eval_args,
                     )
                     subtask_results.update(metric_score)
 
@@ -376,11 +374,10 @@ def command_selector(
                     args.output_paths, args.raw_data_paths, args.generations_paths
                 ):
                     paths_scores_correspondence[output_path].update(
-                        run_instantiated_metric(
-                            metric=metric,
+                        metric.run(
                             hypothesis_path=generations_path,
                             gold_data_path=raw_data_path,
-                            eval_args=eval_args,
+                            **eval_args,
                         )
                     )
                     save_to_json(
