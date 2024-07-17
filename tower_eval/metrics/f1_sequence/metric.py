@@ -38,14 +38,17 @@ class F1SEQUENCE(Metric):
         valid_ner_tags: list[str] = None,
         **kwargs,
     ) -> dict:
+        language = kwargs["lp"]["src_lang"]
         hypothesis = self._load_samples(
             hypothesis_path,
+            language=language,
             format=hypothesis_format,
             tokenize=tokenize_hypothesis,
+            default_noent_tag=default_noent_tag
         )
         hypothesis = self.filter_tags(hypothesis, valid_ner_tags, default_noent_tag)
         reference = self._load_samples(
-            gold_data_path, format=reference_format, tokenize=False
+            gold_data_path, language=language, format=reference_format, tokenize=False, default_noent_tag=default_noent_tag
         )
         reference = self.filter_tags(reference, valid_ner_tags, default_noent_tag)
 
@@ -67,7 +70,7 @@ class F1SEQUENCE(Metric):
     ) -> F1SequenceResult:
         # evaluate by tag
         f1s_by_tag = {}
-        for tag in self.valid_ner_tags:
+        for tag in valid_ner_tags:
             filtered_hypothesis = self.filter_tags(hypothesis, tag, default_noent_tag)
             filtered_reference = self.filter_tags(reference, tag, default_noent_tag)
             true_seqs, pred_seqs = align_hyp_ref(
@@ -101,9 +104,11 @@ class F1SEQUENCE(Metric):
     def _load_samples(
         self,
         filename: str,
+        language: str,
         format: Literal["text", "tsv", "xml"] = "text",
         separator="|",
         tokenize: bool = False,
+        default_noent_tag: str = "O"
     ) -> List[List[str]]:
         """ "
         It reads the labeled file, and returns only the tags.
@@ -119,13 +124,13 @@ class F1SEQUENCE(Metric):
             if tokenize:
                 input_lines = read_lines(filename)
                 input_lines = tokenize_spacy(
-                    lines=input_lines, language=self.language, keep_xml=True
+                    lines=input_lines, language=language, keep_xml=True
                 )
             else:
                 with open(filename, "r", encoding="utf8") as ifh:
                     input_lines = ifh.readlines()
                     input_lines = [line.strip() for line in input_lines]
-            labels = [self.xml2iob(hyp) for hyp in input_lines]
+            labels = [self.xml2iob(hyp, default_noent_tag) for hyp in input_lines]
         elif format == "tsv":
             separator = "\t"
             with open(filename, "r", encoding="utf8") as infh:
@@ -166,11 +171,11 @@ class F1SEQUENCE(Metric):
         tokens = [token[1] for token in list_of_tuples]
         return tokens
 
-    def xml2iob(self, xml_string):
+    def xml2iob(self, xml_string, default_noent_tag):
         tokens = xml_string.split()
         annotations = []
         # tag is set to "O" (self.noent_tag) by default
-        tag = self.default_noent_tag
+        tag = default_noent_tag
         for token in tokens:
             matching_open_tag = re.search(PATTERN_OPEN_TAG, token)
             matching_close_tag = re.search(PATTERN_CLOSE_TAG, token)

@@ -17,15 +17,15 @@ class ERRANT(Metric):
         self,
         hypothesis_path,
         gold_data_path,
-        references,
-        language: str,
         tokenize_source: bool = False,
         tokenize_hypothesis: bool = False,
         **kwargs
     ) -> dict:
-        hypothesis_m2 = self.preprocess(hypothesis_path, gold_data_path, language)
+        language = kwargs["lp"]["src_lang"]
+        references = kwargs["references_m2"]
+        hypothesis_m2 = self.preprocess(hypothesis_path, gold_data_path, language, tokenize_source, tokenize_hypothesis)
         result = self.evaluate(
-            hypothesis_m2, references, language, tokenize_source, tokenize_hypothesis
+            hypothesis_m2, references
         )
         result.print_result(self.metric_name())
         return result.format_result(self.metric_name())
