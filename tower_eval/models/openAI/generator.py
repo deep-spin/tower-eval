@@ -75,9 +75,12 @@ class OpenAI(Generator):
         self.retry_max_interval = kwargs.get("retry_max_interval", retry_max_interval)
         self.retry_min_interval = kwargs.get("retry_min_interval", retry_min_interval)
         self.retry_multiplier = kwargs.get("retry_multiplier", retry_multiplier)
-        self.model_max_tokens = (
-            4097 if model == "gpt-3.5-turbo" else 8192 if model == "gpt-4" else 32000
-        )
+        self.model_max_tokens = {
+            "gpt-3.5-turbo": 4096,
+            "gpt-4": 8192,
+            "gpt-4o": 128000,
+            "gpt-4o-mini": 128000,
+        }.get(model, 32000)
 
         openai.api_type = api_type
         openai.api_key = os.environ.get("OPENAI_API_KEY", api_key)
