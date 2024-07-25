@@ -338,10 +338,9 @@ def get_eval_args_given_task(
     )
     gold_data_path = data_dir / task_name / subtask / "test.jsonl"
     # add language argument to eval_args as it is needed in some metrics
-    language = subtask.split(".")[1]
-    if "-" in language:
-        _, language = get_langs(language)
-    eval_args["language"] = language
+    lp = subtask.split(".")[1]
+    src_lang, trg_lang = get_langs(lp)
+    eval_args["lp"] = {"src_lang": src_lang, "trg_lang": trg_lang}
 
     return hypothesis_path, gold_data_path, eval_args
 
@@ -422,8 +421,10 @@ def get_langs(lp):
         "pt",
         "ru",
         "zh-CN",
-        "zh",
         "zh-cn",
+        "zh-TW",
+        "zh-tw",
+        "zh",
         "ja",
         "hi",
         "uk",
@@ -453,9 +454,17 @@ def get_langs(lp):
     lang_pattern = "|".join(valid_langs)
     lp_pattern = rf"^({lang_pattern})-({lang_pattern})$"
     match = re.match(lp_pattern, lp)
-    src_lang = match.group(1)
-    trg_lang = match.group(2)
-    return src_lang, trg_lang
+    if match:
+        # We have a language pair, so both src_lang and trg_lang will be extracted from lp
+        src_lang = match.group(1)
+        trg_lang = match.group(2)
+        return src_lang, trg_lang
+    elif lp in valid_langs:
+        # the task is monolingual, hence we only have one language. So, we set the src_lang only. trg_lang will be set to None
+        src_lang = lp
+        trg_lang = None
+        return src_lang, trg_lang
+    return None, None
 
 
 def add_average_generation_time(
