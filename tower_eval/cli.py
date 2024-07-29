@@ -342,7 +342,8 @@ def run_generations(
             try:
                 # All the models except VLLM can be easily executed without requiring the subprocesses.
                 generate(i, config_path, config_type, available_models)
-            except:
+            except Exception as e:
+                print(e)
                 logger.error(
                     f"{model['name']} has run into an error. Double check generations before running evaluations."
                 )

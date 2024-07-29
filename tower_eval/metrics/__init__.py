@@ -25,12 +25,16 @@ from tower_eval.metrics.pearson.metric import PEARSON
 from tower_eval.metrics.perplexity.metric import Perplexity
 from tower_eval.metrics.spearman.metric import SPEARMAN
 from tower_eval.metrics.ter.metric import TER
+from tower_eval.metrics.xcomet_qe_xl.metric import XCOMETQEXL
 from tower_eval.metrics.xcomet_qe_xxl.metric import XCOMETQEXXL
+from tower_eval.metrics.xcomet_xl.metric import XCOMETXL
 from tower_eval.metrics.xcomet_xxl.metric import XCOMETXXL
 
 __all__ = [
     TER,
     BLEU,
+    XCOMETXL,
+    XCOMETQEXL,
     XCOMETXXL,
     XCOMETQEXXL,
     COMET,
