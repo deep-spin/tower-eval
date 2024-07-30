@@ -32,6 +32,7 @@ from tower_eval.utils import (
     parse_dict_arg,
     parse_yaml_config,
     save_to_json,
+    load_json_file,
 )
 
 
@@ -174,16 +175,19 @@ def run_evaluations(configs: dict, available_metrics: dict = available_metrics) 
                             model_name,
                         )
                     )
-                    metric_score = instantiated_metric.run(
-                        hypothesis_path=hypothesis_path,
-                        gold_data_path=gold_data_path,
-                        **eval_args,
-                    )
-                    subtask_results.update(metric_score)
-
+                    metric_score = None
                     if Path(output_path).exists():
-                        existing_results = json.load(open(output_path, "r"))
-                        subtask_results.update(existing_results)
+                        subtask_results = load_json_file(output_path)
+                        metric_score = subtask_results.get(task_metric)
+                    # metric_score is None if the output file does't exist or if it doesn't contain the scores of this metric.
+                    # In any of those cases we will need to run the metric.
+                    if metric_score is None:
+                        metric_result = instantiated_metric.run(
+                            hypothesis_path=hypothesis_path,
+                            gold_data_path=gold_data_path,
+                            **eval_args,
+                        )
+                        subtask_results.update(metric_result)
                     save_to_json(
                         save_location=output_path,
                         data=subtask_results,
