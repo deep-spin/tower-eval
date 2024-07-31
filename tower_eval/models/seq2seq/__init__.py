@@ -10,6 +10,7 @@ NLLB_LANGUAGE_CODES = {
     "ban": "ban_Latn",
     "bal": "bak_Cyrl",
     "be": "bel_Cyrl",
+    "bg": "bul_Cyrl",
     "bn": "ben_Beng",
     "br": "bre_Latn",
     "bs": "bos_Latn",
