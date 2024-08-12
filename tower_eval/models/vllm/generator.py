@@ -21,7 +21,8 @@ class VLLM(Generator):
         trust_remote_code: bool = True,
         gpu_memory_utilization: float = 0.9,
         temperature: float = 0.0,  # greedy by default
-        vllm_sampling_params: dict = {},  # see vllm SamplingParams and pass desired kwargs in yaml
+        vllm_sampling_params: dict = {},  # see vllm SamplingParams and pass desired kwargs
+        vllm_engine_args: dict = {},  # see vllm LLM and pass desired kwargs
         **kwargs
     ) -> None:
         super().__init__(**kwargs)
@@ -52,6 +53,7 @@ class VLLM(Generator):
             trust_remote_code=self.trust_remote_code,
             tensor_parallel_size=self.n_gpus,
             gpu_memory_utilization=gpu_memory_utilization,
+            **vllm_engine_args
         )
 
     def _generate(self, input_line: str) -> str:

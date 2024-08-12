@@ -29,10 +29,10 @@ from tower_eval.utils import (
     combine_metrics_args,
     get_eval_args_given_task,
     handle_subprocess,
+    load_json_file,
     parse_dict_arg,
     parse_yaml_config,
     save_to_json,
-    load_json_file,
 )
 
 
