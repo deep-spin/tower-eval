@@ -195,7 +195,7 @@ def write_lines(
                 )
             line = line.replace("\n", "\\n")
         out_lines.append(line)
-    with open(path, "w") as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.writelines((f"{l}\n" for l in out_lines))
 
 
