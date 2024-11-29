@@ -4,8 +4,7 @@ import re
 
 import openai
 from loguru import logger
-from openai.error import InvalidRequestError
-from openai.util import ApiType
+from openai import BadRequestError
 
 from tower_eval.models.exceptions import GenerationException
 from tower_eval.models.inference_handler import Generator
@@ -33,7 +32,6 @@ class OpenAI(Generator):
         api_key: str = None,
         api_base: str = "https://api.openai.com/v1",
         api_version: str = None,
-        api_type=ApiType.OPEN_AI.name,
         model: str = "gpt-3.5-turbo",
         temperature: float = 0.0,
         top_p: float = 1.0,
@@ -82,7 +80,6 @@ class OpenAI(Generator):
             "gpt-4o-mini": 128000,
         }.get(model, 32000)
 
-        openai.api_type = api_type
         openai.api_key = os.environ.get("OPENAI_API_KEY", api_key)
         openai.organization = os.environ.get("OPENAI_API_ORG", api_org)
         openai.api_version = api_version
@@ -109,7 +106,7 @@ class OpenAI(Generator):
             else:
                 prompt = {"messages": [{"role": "user", "content": input_line}]}
             response = generate_with_retries(
-                retry_function=openai.ChatCompletion.create,
+                retry_function=openai.chat.completions.create,
                 model_args=self.openai_args | prompt,
                 retry_max_attempts=self.retry_max_attempts,
                 retry_multiplier=self.retry_multiplier,
@@ -117,7 +114,7 @@ class OpenAI(Generator):
                 retry_max_interval=self.retry_max_interval,
             )
         except Exception as e:
-            if type(e) == InvalidRequestError:
+            if type(e) == BadRequestError:
                 response = self._handle_excessive_tokens_error(e, prompt)
             else:
                 raise GenerationException(str(e))
@@ -125,7 +122,8 @@ class OpenAI(Generator):
         response = response.choices[0].message.content
         return response
 
-    def _handle_excessive_tokens_error(self, e: InvalidRequestError, prompt: dict):
+    # def _handle_excessive_tokens_error(self, e: InvalidRequestError, prompt: dict):
+    def _handle_excessive_tokens_error(self, e: BadRequestError, prompt: dict):
         logger.error(
             f'Handling Open AI excessive tokens requested error by decreasing max tokens for this request. ("{str(e)}")'
         )

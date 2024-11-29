@@ -1,6 +1,5 @@
 from typing import List
 
-from loguru import logger
 from vllm import LLM, SamplingParams
 
 from tower_eval.models.inference_handler import Generator
@@ -44,7 +43,7 @@ class VLLM(Generator):
             stop=self.stop_sequences,
             max_tokens=self.max_tokens,
             temperature=self.temperature,
-            **vllm_sampling_params
+            **vllm_sampling_params,
         )
         self.model = LLM(
             model=self.model_dir,
@@ -53,7 +52,7 @@ class VLLM(Generator):
             trust_remote_code=self.trust_remote_code,
             tensor_parallel_size=self.n_gpus,
             gpu_memory_utilization=gpu_memory_utilization,
-            **vllm_engine_args
+            **vllm_engine_args,
         )
 
     def _generate(self, input_line: str) -> str:
@@ -74,7 +73,18 @@ class VLLM(Generator):
             messages = []
         messages.append({"role": "user", "content": input_line})
         input_line = tokenizer.apply_chat_template(
-            messages, add_generation_prompt=True, tokenize=False
+            messages,
+            add_generation_prompt=True,
+            tokenize=False,
+            chat_template=(
+                None
+                if self.model_dir
+                not in [
+                    "openGPT-X/Teuken-7B-instruct-research-v0.4",
+                    "openGPT-X/Teuken-7B-instruct-commercial-v0.4",
+                ]
+                else "EN"
+            ),
         )
         return input_line
 

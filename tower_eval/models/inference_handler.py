@@ -85,15 +85,16 @@ class Generator(ABC):
         else:
             input_lines = [input_line for input_line in input_lines]
         if self.use_chat_template:
-            if self.model_name() == "vllm":
+            if self.model_name() in ["hf", "vllm"]:
                 logger.warning("Applying chat template to loaded instructions.")
             else:
                 raise NotImplementedError(
-                    "Applying chat template on the fly is only supported by vllm models; please set the use_chat_template flag to False."
+                    "Applying chat template on the fly is only supported by hf or vllm models; please set the use_chat_template flag to False."
                 )
             input_lines = [
                 self.apply_chat_template(input_line) for input_line in input_lines
             ]
+        logger.info(f"Example processed line: {input_lines[-1]}")
         return input_lines
 
     def generate_to_file(
