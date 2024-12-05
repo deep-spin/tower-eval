@@ -94,7 +94,8 @@ class Generator(ABC):
             input_lines = [
                 self.apply_chat_template(input_line) for input_line in input_lines
             ]
-        logger.info(f"Example processed line: {input_lines[-1]}")
+        if len(input_lines) > 0:
+            logger.info(f"Example processed line: {input_lines[-1]}")
         return input_lines
 
     def generate_to_file(

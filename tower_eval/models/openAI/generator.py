@@ -28,10 +28,8 @@ class OpenAI(Generator):
 
     def __init__(
         self,
-        api_org: str = None,
-        api_key: str = None,
+        api_key: str = os.environ["OPENAI_API_KEY"],
         api_base: str = "https://api.openai.com/v1",
-        api_version: str = None,
         model: str = "gpt-3.5-turbo",
         temperature: float = 0.0,
         top_p: float = 1.0,
@@ -79,11 +77,7 @@ class OpenAI(Generator):
             "gpt-4o": 128000,
             "gpt-4o-mini": 128000,
         }.get(model, 32000)
-
-        openai.api_key = os.environ.get("OPENAI_API_KEY", api_key)
-        openai.organization = os.environ.get("OPENAI_API_ORG", api_org)
-        openai.api_version = api_version
-        openai.api_base = api_base
+        self.client = openai.Client(api_key=api_key, base_url=api_base)
 
     def _generate(self, input_line: str) -> str:
         """It calls the Chat completion function of OpenAI.
@@ -106,7 +100,7 @@ class OpenAI(Generator):
             else:
                 prompt = {"messages": [{"role": "user", "content": input_line}]}
             response = generate_with_retries(
-                retry_function=openai.chat.completions.create,
+                retry_function=self.client.chat.completions.create,
                 model_args=self.openai_args | prompt,
                 retry_max_attempts=self.retry_max_attempts,
                 retry_multiplier=self.retry_multiplier,
@@ -136,7 +130,7 @@ class OpenAI(Generator):
             f"Decreased max tokens from {old_max_tokens} to {new_max_tokens}."
         )
         response = generate_with_retries(
-            retry_function=openai.ChatCompletion.create,
+            retry_function=self.client.chat.completions.create,
             model_args=self.openai_args | prompt,
             retry_max_attempts=self.retry_max_attempts,
             retry_multiplier=self.retry_multiplier,

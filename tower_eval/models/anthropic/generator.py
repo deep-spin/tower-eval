@@ -2,6 +2,7 @@
 import os
 
 import anthropic
+
 from tower_eval.models.inference_handler import Generator
 from tower_eval.utils import generate_with_retries
 
@@ -12,7 +13,7 @@ class Anthropic(Generator):
     def __init__(
         self,
         api_key: str = None,
-        model: str = "claude-3-sonnet-20240229",
+        model: str = "",
         temperature: float = 0.0,
         top_p: float = 1.0,
         max_tokens: int = 1024,
