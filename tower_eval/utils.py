@@ -571,3 +571,18 @@ def split_pairs_by_xml_tags(string1: str, string2: str):
         pass
 
     return (None, None)
+
+def prepare_xml_markup_pairs(hypotheses, references):
+    hypothesis_segmented, references_segmented = [], []
+    non_matching_indices = []
+    current_index = 0
+    for hyp, ref in zip(hypotheses, references):
+        hs, rs = split_pairs_by_xml_tags(hyp, ref)
+        if hs and rs:
+            hypothesis_segmented.extend(hs)
+            references_segmented.extend(rs)
+            current_index += len(hs)
+        else:
+            non_matching_indices.append(current_index)
+            current_index += 1
+    return hypothesis_segmented, references_segmented, non_matching_indices
