@@ -29,6 +29,8 @@ from tower_eval.metrics.xcomet_qe_xl.metric import XCOMETQEXL
 from tower_eval.metrics.xcomet_qe_xxl.metric import XCOMETQEXXL
 from tower_eval.metrics.xcomet_xl.metric import XCOMETXL
 from tower_eval.metrics.xcomet_xxl.metric import XCOMETXXL
+from tower_eval.metrics.xml_chrf.metric import XML_CHRF
+from tower_eval.metrics.xml_match.metric import XML_MATCH
 
 __all__ = [
     TER,
@@ -58,6 +60,8 @@ __all__ = [
     MetricXQE,
     MetricXQEXXL,
     MetricXXXL,
+    XML_CHRF,
+    XML_MATCH,
 ]
 
 
