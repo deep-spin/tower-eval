@@ -30,7 +30,7 @@ class OpenAI(Generator):
         self,
         api_key: str = os.environ["OPENAI_API_KEY"],
         api_base: str = "https://api.openai.com/v1",
-        model: str = "gpt-3.5-turbo",
+        model: str = "",
         temperature: float = 0.0,
         top_p: float = 1.0,
         max_tokens: int = 1024,
@@ -61,7 +61,7 @@ class OpenAI(Generator):
             "model": model,
             "temperature": temperature,
             "top_p": top_p,
-            "max_tokens": max_tokens,
+            "max_completion_tokens": max_tokens,
             "frequency_penalty": frequency_penalty,
             "presence_penalty": presence_penalty,
             "stop": stop_sequences,
@@ -123,9 +123,9 @@ class OpenAI(Generator):
         )
         requested_tokens = int(re.findall(r"you requested (\d+) tokens", str(e))[0])
         excessive_tokens = requested_tokens - self.model_max_tokens
-        old_max_tokens = self.openai_args["max_tokens"]
+        old_max_tokens = self.openai_args["max_completion_tokens"]
         new_max_tokens = old_max_tokens - excessive_tokens
-        self.openai_args["max_tokens"] = new_max_tokens
+        self.openai_args["max_completion_tokens"] = new_max_tokens
         logger.warning(
             f"Decreased max tokens from {old_max_tokens} to {new_max_tokens}."
         )
@@ -138,7 +138,7 @@ class OpenAI(Generator):
             retry_max_interval=self.retry_max_interval,
         )
         logger.warning(f"Restoring max tokens to {old_max_tokens}.")
-        self.openai_args["max_tokens"] = old_max_tokens
+        self.openai_args["max_completion_tokens"] = old_max_tokens
 
         return response
 
