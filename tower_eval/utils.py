@@ -8,11 +8,13 @@ import time
 from pathlib import Path
 from typing import Dict, Iterable, List, Union
 
+import lxml
 import numpy as np
 import spacy
 import tqdm
 import yaml
 from loguru import logger
+from lxml import etree
 from mosestokenizer import MosesDetokenizer
 from nltk.tokenize.treebank import TreebankWordDetokenizer
 from tenacity import Retrying, stop_after_attempt, wait_random_exponential
@@ -116,7 +118,7 @@ def load_json_file(
 
     :param file_path: either the handler to the file storing the hypotheses.
     """
-    with open(file_path, "r") as f:
+    with open(file_path, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -133,7 +135,7 @@ def load_jsonl_file(
     :return:
         -  List of dictionaries
     """
-    with open(file_path, "r") as f:
+    with open(file_path, "r", encoding="utf-8") as f:
         json_list = list(f)
 
     return [json.loads(l) for l in json_list]
@@ -512,3 +514,75 @@ def write_jsonl(path, data):
     with open(path, "w") as f:
         for d in data:
             f.write(json.dumps(d, ensure_ascii=False) + "\n")
+
+
+def match_xml(string_1: lxml.etree._Element, string_2: lxml.etree._Element):
+    if string_1.tag != string_2.tag:
+        return False
+
+    string_1 = list(string_1.iterchildren())
+    string_2 = list(string_2.iterchildren())
+
+    if len(string_1) != len(string_2):
+        return False
+
+    for s1, s2 in zip(string_1, string_2):
+        if not match_xml(s1, s2):
+            return False
+    return True
+
+
+def split_by_xml_tags(string: str):
+    try:
+        root = etree.fromstring(f"<root>{string}</root>")
+        parts = []
+
+        for element in root.iter():
+            if element.tag == "root":
+                if element.text:
+                    parts.append(element.text)
+                continue
+
+            if element.text:
+                parts.append(element.text)
+            if element.tail:
+                parts.append(element.tail)
+
+        return [p.strip() for p in parts if p.strip()]
+    except etree.XMLSyntaxError:
+        return [string]
+
+
+def split_pairs_by_xml_tags(string1: str, string2: str):
+    try:
+        string1_xml = etree.fromstring(f"<root>{string1}</root>")
+        string2_xml = etree.fromstring(f"<root>{string2}</root>")
+        if not match_xml(string1_xml, string2_xml):
+            return (None, None)
+
+        string1_segmented = split_by_xml_tags(string1)
+        string2_segmented = split_by_xml_tags(string2)
+        string1_segmented = [seg for seg in string1_segmented if seg is not None]
+        string2_segmented = [seg for seg in string2_segmented if seg is not None]
+
+        if len(string1_segmented) == len(string2_segmented):
+            return (string1_segmented, string2_segmented)
+    except:
+        pass
+
+    return (None, None)
+
+def prepare_xml_markup_pairs(hypotheses, references):
+    hypothesis_segmented, references_segmented = [], []
+    non_matching_indices = []
+    current_index = 0
+    for hyp, ref in zip(hypotheses, references):
+        hs, rs = split_pairs_by_xml_tags(hyp, ref)
+        if hs and rs:
+            hypothesis_segmented.extend(hs)
+            references_segmented.extend(rs)
+            current_index += len(hs)
+        else:
+            non_matching_indices.append(current_index)
+            current_index += 1
+    return hypothesis_segmented, references_segmented, non_matching_indices
