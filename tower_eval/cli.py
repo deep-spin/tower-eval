@@ -292,7 +292,7 @@ def command_selector(
         # NOTE: Overwriting the parameters of the config file by the values provided via commandline is not supported
         if args.config:
             config_args = parse_yaml_config(args.config)
-            scores = run_evaluations(config_args)
+            scores = run_evaluations(config_args, available_metrics=available_metrics)
         else:
             paths_scores_correspondence = {o: {} for o in args.output_paths}
             for metric in args.metrics:
