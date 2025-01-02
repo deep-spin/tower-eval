@@ -16,6 +16,14 @@ from tower_eval.metrics.error_span_detection_recall.metric import (
 from tower_eval.metrics.f1.metric import F1
 from tower_eval.metrics.f1_sequence.metric import F1SEQUENCE
 from tower_eval.metrics.metricx.metric import MetricX
+from tower_eval.metrics.metricx_24.metric import (
+    MetricX_24_Large,
+    MetricX_24_QE_Large,
+    MetricX_24_QE_XL,
+    MetricX_24_QE_XXL,
+    MetricX_24_XL,
+    MetricX_24_XXL,
+)
 from tower_eval.metrics.metricx_large.metric import MetricXLarge
 from tower_eval.metrics.metricx_qe.metric import MetricXQE
 from tower_eval.metrics.metricx_qe_large.metric import MetricXQELarge
@@ -58,6 +66,12 @@ __all__ = [
     MetricXQE,
     MetricXQEXXL,
     MetricXXXL,
+    MetricX_24_Large,
+    MetricX_24_XL,
+    MetricX_24_XXL,
+    MetricX_24_QE_Large,
+    MetricX_24_QE_XL,
+    MetricX_24_QE_XXL,
 ]
 
 

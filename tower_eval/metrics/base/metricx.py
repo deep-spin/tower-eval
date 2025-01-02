@@ -21,13 +21,16 @@ class BaseMetricXResult(MetricResult):
 
 
 class BaseMetricX(Metric):
-    def __init__(self, tokenizer: str, model: str, **kwargs) -> None:
+    def __init__(
+        self, tokenizer: str, model: str, max_input_length: int, **kwargs
+    ) -> None:
         if torch.cuda.is_available():
             # This refers to the first visible GPU
             self.device = torch.device("cuda")
         else:
             self.device = torch.device("cpu")
         super().__init__(**kwargs)
+        self.max_input_length = max_input_length
         self.model = models.MT5ForRegression.from_pretrained(model)
         self.tokenizer = AutoTokenizer.from_pretrained(tokenizer)
         self.model.to(self.device)
@@ -69,7 +72,10 @@ class BaseMetricX(Metric):
 
         def _tokenize(example):
             return self.tokenizer(
-                example["input"], max_length=1024, truncation=True, padding=False
+                example["input"],
+                max_length=self.max_input_length,
+                truncation=True,
+                padding=False,
             )
 
         def _remove_eos(example):
@@ -112,7 +118,9 @@ class BaseMetricX(Metric):
 
 class RefMetricX(BaseMetricX):
     def __init__(self, tokenizer: str, model: str, **kwargs) -> None:
-        super().__init__(model=model, tokenizer=tokenizer, **kwargs)
+        super().__init__(
+            model=model, tokenizer=tokenizer, max_input_length=1024, **kwargs
+        )
 
     @staticmethod
     def load_gold_data(gold_data):
@@ -139,9 +147,45 @@ class RefMetricX(BaseMetricX):
         return example
 
 
+class RefMetricX_24(BaseMetricX):
+    def __init__(self, tokenizer: str, model: str, **kwargs) -> None:
+        super().__init__(
+            model=model, tokenizer=tokenizer, max_input_length=1536, **kwargs
+        )
+
+    @staticmethod
+    def load_gold_data(gold_data):
+        references, sources = gold_data["ref"], gold_data["src"]
+
+        return references, sources
+
+    @staticmethod
+    def make_samples(
+        hypotheses: list[str], references: list[str], sources: list[str] = None
+    ):
+        return [
+            {"hypothesis": h, "reference": r, "source": s}
+            for h, r, s in zip(hypotheses, references, sources)
+        ]
+
+    @staticmethod
+    def _make_input(example):
+        example["input"] = (
+            "source: "
+            + example["source"]
+            + " candidate: "
+            + example["hypothesis"]
+            + " reference: "
+            + example["reference"]
+        )
+        return example
+
+
 class QEMetricX(BaseMetricX):
     def __init__(self, tokenizer: str, model: str, **kwargs) -> None:
-        super().__init__(model=model, tokenizer=tokenizer, **kwargs)
+        super().__init__(
+            model=model, tokenizer=tokenizer, max_input_length=1024, **kwargs
+        )
 
     @staticmethod
     def load_gold_data(gold_data):
@@ -159,5 +203,31 @@ class QEMetricX(BaseMetricX):
     def _make_input(example):
         example["input"] = (
             "candidate: " + example["hypothesis"] + " source: " + example["source"]
+        )
+        return example
+
+
+class QEMetricX_24(BaseMetricX):
+    def __init__(self, tokenizer: str, model: str, **kwargs) -> None:
+        super().__init__(
+            model=model, tokenizer=tokenizer, max_input_length=1536, **kwargs
+        )
+
+    @staticmethod
+    def load_gold_data(gold_data):
+        references, sources = None, gold_data["src"]
+
+        return references, sources
+
+    @staticmethod
+    def make_samples(
+        sources: list[str], hypotheses: list[str], references: list[str] = None
+    ):
+        return [{"hypothesis": h, "source": s} for h, s in zip(hypotheses, sources)]
+
+    @staticmethod
+    def _make_input(example):
+        example["input"] = (
+            "source: " + example["source"] + " candidate: " + example["hypothesis"]
         )
         return example
