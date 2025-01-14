@@ -43,8 +43,10 @@ def run_evaluations(configs: dict, available_metrics: dict = available_metrics) 
         format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {message}",
     )
     config_to_save = deepcopy(configs)
-    output_dir = Path(configs.get("output_dir", None))
-    data_dir = Path(configs.get("data_dir"))
+    eval_output_dir = Path(configs.get("eval_output_dir", None))
+    gen_output_dir = Path(configs.get("gen_output_dir", None))
+    eval_data_dir = Path(configs.get("eval_data_dir"))
+    overwrite_evaluations = configs.get("overwrite_evaluations", False)
     for task in configs.get("tasks"):
         task_results = {}
         task_name = task.get("name")
@@ -72,14 +74,7 @@ def run_evaluations(configs: dict, available_metrics: dict = available_metrics) 
                         if subtask_args is not None
                         else {}
                     )
-                    output_path = (
-                        output_dir
-                        / task_name
-                        / subtask
-                        / model["type"]
-                        / model["name"]
-                        / "evaluation.json"
-                    )
+
                     # update subtask specific args, if they are specified
                     subtask_metric_args = subtask_metrics.get(task_metric)
                     subtask_metric_args = (
@@ -95,37 +90,38 @@ def run_evaluations(configs: dict, available_metrics: dict = available_metrics) 
                     )
                     # make paths for source, hyp and ref, given task and subtask parameters
                     # different tasks have different source and reference file types
-                    hypothesis_path, gold_data_path, eval_args = (
+                    gen_output_path, eval_data_path, eval_output_path, eval_args = (
                         get_eval_args_given_task(
-                            eval_args,
-                            task_name,
-                            data_dir,
-                            subtask,
-                            output_dir,
-                            model_type,
-                            model_name,
+                            eval_args=eval_args,
+                            task_name=task_name,
+                            eval_data_dir=eval_data_dir,
+                            subtask=subtask,
+                            gen_output_dir=gen_output_dir,
+                            eval_output_dir=eval_output_dir,
+                            model_type=model_type,
+                            model_name=model_name,
                         )
                     )
                     metric_score = None
-                    if Path(output_path).exists():
-                        subtask_results = load_json_file(output_path)
+                    if Path(eval_output_path).exists():
+                        subtask_results = load_json_file(eval_output_path)
                         metric_score = subtask_results.get(task_metric)
                     # metric_score is None if the output file does't exist or if it doesn't contain the scores of this metric.
                     # In any of those cases we will need to run the metric.
-                    if metric_score is None:
+                    if metric_score is None or overwrite_evaluations:
                         metric_result = instantiated_metric.run(
-                            hypothesis_path=hypothesis_path,
-                            gold_data_path=gold_data_path,
+                            hypothesis_path=gen_output_path,
+                            gold_data_path=eval_data_path,
                             **eval_args,
                         )
                         subtask_results.update(metric_result)
                     save_to_json(
-                        save_location=output_path,
+                        save_location=eval_output_path,
                         data=subtask_results,
                     )
                     # save run metadata to the same path for better experiment tracking
                     save_to_json(
-                        save_location=Path(output_path).parent / "metadata.json",
+                        save_location=Path(eval_output_path).parent / "metadata.json",
                         data=config_to_save,
                     )
             task_results.update({subtask: subtask_results})
@@ -242,7 +238,6 @@ def run_index(config: dict) -> None:
 def run_generations(
     configs: dict,
     config_path: str,
-    config_type: str,
     available_models: dict = available_models,
 ) -> dict:
     logger.remove()
@@ -265,8 +260,6 @@ def run_generations(
                 f"{str(i)}",
                 "--config_path",
                 f"{config_path}",
-                "--config_type",
-                f"{config_type}",
             ]
             failure = handle_subprocess(subprocess_args)
             if failure:
@@ -276,7 +269,7 @@ def run_generations(
         else:
             try:
                 # All the models except VLLM can be easily executed without requiring the subprocesses.
-                generate(i, config_path, config_type, available_models)
+                generate(i, config_path, available_models)
             except Exception as e:
                 print(e)
                 logger.error(
@@ -335,7 +328,6 @@ def command_selector(
             run_generations(
                 config_args,
                 args.config,
-                config_type="generate",
                 available_models=available_models,
             )
         else:
@@ -352,46 +344,46 @@ def command_selector(
                 args.model_args,
                 args.metadata_file_paths,
                 available_models,
+                overwrite_generations=args.overwrite_generations,
             )
 
     elif args.command == "gen-eval":
         if args.config:
             config_args = parse_yaml_config(args.config)
         # make eval and gen config
-        configs = {"gen": {}, "eval": {}}
-        for step in ["gen", "eval"]:
-            configs[step]["output_dir"] = config_args[f"{step}_output_dir"]
-            configs[step]["data_dir"] = config_args[f"{step}_data_dir"]
-            configs[step]["tasks"] = []
-            # create task structure
-            for task in config_args.get("tasks"):
-                subtask_dict = task["subtasks"]
-                task_dict = {"name": task.get("name"), "subtasks": {}}
-                for subtask in task.get("subtasks"):
-                    task_dict["subtasks"][subtask] = {}
-                    if step == "eval":
-                        # if we define specific eval args for a given subtask
-                        if subtask_dict[subtask] is not None:
-                            for arg in subtask_dict[subtask]["eval_args"]:
-                                task_dict["subtasks"][subtask][arg] = subtask_dict[
-                                    subtask
-                                ][f"{step}_args"][arg]
-                        task_dict["metrics"] = task.get("metrics")
-                configs[step]["tasks"].append(task_dict)
-            # create model structure
-            configs[step]["models"] = []
-            for model_dict in config_args.get("models"):
-                # add hypothesis file to eval config
-                if step == "eval":
-                    model_dict["hypothesis_dir"] = config_args["gen_output_dir"]
-                configs[step]["models"].append(model_dict)
+        configs = {}
+        configs["gen_data_dir"] = config_args["gen_data_dir"]
+        configs["gen_output_dir"] = config_args["gen_output_dir"]
+        configs["eval_data_dir"] = config_args["eval_data_dir"]
+        configs["eval_output_dir"] = config_args["eval_output_dir"]
+        configs["tasks"] = []
+        # create task structure
+        for task in config_args.get("tasks"):
+            subtask_dict = task["subtasks"]
+            task_dict = {"name": task.get("name"), "subtasks": {}}
+            for subtask in task.get("subtasks"):
+                task_dict["subtasks"][subtask] = {}
+
+                # if we define specific eval args for a given subtask
+                if subtask_dict[subtask] is not None:
+                    for arg in subtask_dict[subtask]["eval_args"]:
+                        task_dict["subtasks"][subtask][arg] = subtask_dict[
+                            subtask
+                        ]["eval_args"][arg]
+                task_dict["metrics"] = task.get("metrics")
+            configs["tasks"].append(task_dict)
+        # create model structure
+        configs["models"] = []
+        for model_dict in config_args.get("models"):
+            # add hypothesis file to eval config
+            model_dict["hypothesis_dir"] = config_args["gen_output_dir"]
+            configs["models"].append(model_dict)
         run_generations(
-            configs["gen"],
+            configs,
             args.config,
-            config_type="gen-eval",
             available_models=available_models,
         )
-        run_evaluations(configs["eval"], available_metrics=available_metrics)
+        run_evaluations(configs, available_metrics=available_metrics)
     else:
         logger.error(f"{args.command} is not supported!")
 
@@ -494,6 +486,16 @@ def argument_parser():
         type=parse_dict_arg,
         default={},
         help="Evaluation arguments dictionary.",
+    )
+    parser.add_argument(
+        "--overwrite_evaluations",
+        action="store_true",
+        help="Flag to overwrite existing evaluations.",
+    )
+    parser.add_argument(
+        "--overwrite_generations",
+        action="store_true",
+        help="Flag to overwrite existing generations.",
     )
     return parser.parse_args()
 
