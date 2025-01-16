@@ -94,9 +94,9 @@ def run_evaluations(configs: dict, available_metrics: dict = available_metrics) 
                         get_eval_args_given_task(
                             eval_args=eval_args,
                             task_name=task_name,
-                            eval_data_dir=eval_data_dir,
                             subtask=subtask,
                             gen_output_dir=gen_output_dir,
+                            eval_data_dir=eval_data_dir,
                             eval_output_dir=eval_output_dir,
                             model_type=model_type,
                             model_name=model_name,
@@ -287,7 +287,7 @@ def command_selector(
             config_args = parse_yaml_config(args.config)
             scores = run_evaluations(config_args, available_metrics=available_metrics)
         else:
-            paths_scores_correspondence = {o: {} for o in args.output_paths}
+            paths_scores_correspondence = {o: {} for o in args.eval_output_paths}
             for metric in args.metrics:
                 eval_args = args.eval_args.get(metric, {})
                 metric = available_metrics[metric](**(eval_args))
@@ -295,12 +295,12 @@ def command_selector(
                     f"Running metric: <green> {metric.metric_name()} </green>"
                 )
                 assert (
-                    len(args.output_paths)
-                    == len(args.raw_data_paths)
-                    == len(args.generations_paths)
+                    len(args.eval_output_paths)
+                    == len(args.eval_data_paths)
+                    == len(args.gen_output_paths)
                 ), "The number of output directories, raw data paths and generations paths should be the same."
                 for output_path, raw_data_path, generations_path in zip(
-                    args.output_paths, args.raw_data_paths, args.generations_paths
+                    args.eval_output_paths, args.eval_data_paths, args.gen_output_paths
                 ):
                     paths_scores_correspondence[output_path].update(
                         metric.run(
@@ -332,18 +332,16 @@ def command_selector(
             )
         else:
             assert (
-                len(args.input_paths)
-                == len(args.output_paths)
-                == len(args.metadata_file_paths)
+                len(args.gen_data_paths)
+                == len(args.gen_output_paths)
             ), "The number of input, output, and metadata paths should be the same."
             simple_generate(
-                args.input_paths,
-                args.output_paths,
-                args.model_path,
-                args.model_type,
-                args.model_args,
-                args.metadata_file_paths,
-                available_models,
+                input_paths=args.gen_data_paths,
+                output_paths=args.gen_output_paths,
+                model_path=args.model_path,
+                model_type=args.model_type,
+                model_args=args.model_args,
+                available_models=available_models,
                 overwrite_generations=args.overwrite_generations,
             )
 
@@ -412,20 +410,36 @@ def argument_parser():
     )
     # GENERATE CLI ARGS
     parser.add_argument(
-        "--input_paths",
-        "-ip",
+        "--gen_data_paths",
+        "-gdp",
         type=Path,
         nargs="+",
         default=None,
-        help="Path to the input file.",
+        help="Path to the input file(s) for the generation step (the instruction files).",
     )
     parser.add_argument(
-        "--output_paths",
-        "-op",
+        "--gen_output_paths",
+        "-gop",
         type=Path,
         nargs="+",
         default=None,
-        help="Path to the output file.",
+        help="Path to the output file(s) of the generation step.",
+    )
+    parser.add_argument(
+        "--eval_data_paths",
+        "-edp",
+        type=Path,
+        nargs="+",
+        default=None,
+        help="Path to the input file(s) for the evaluation step (the raw data files in the jsonl format).",
+    )
+    parser.add_argument(
+        "--eval_output_paths",
+        "-eop",
+        type=Path,
+        nargs="+",
+        default=None,
+        help="Path to the output file(s) of the evaluation step.",
     )
     parser.add_argument(
         "--model_path",
@@ -447,30 +461,6 @@ def argument_parser():
         type=parse_dict_arg,
         default=None,
         help="Model arguments dictionary.",
-    )
-    parser.add_argument(
-        "--metadata_file_paths",
-        "-mfp",
-        type=Path,
-        nargs="+",
-        default=None,
-    )
-    # EVALUATE CLI ARGS
-    parser.add_argument(
-        "--raw_data_paths",
-        "-rdp",
-        type=Path,
-        nargs="+",
-        default=None,
-        help="Path to raw data jsonl file.",
-    )
-    parser.add_argument(
-        "--generations_paths",
-        "-gp",
-        type=Path,
-        nargs="+",
-        default=None,
-        help="Path to generations txt file (1 generation per file).",
     )
     parser.add_argument(
         "--metrics",

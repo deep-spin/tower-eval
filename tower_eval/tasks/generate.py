@@ -65,7 +65,6 @@ def simple_generate(
     model_path: str,
     model_type: str,
     model_args: dict,
-    metadata_file_paths: list[str],
     available_models: dict,
     overwrite_generations: bool = False,
 ):
@@ -76,9 +75,11 @@ def simple_generate(
         "model_type": model_type,
         "model_args": model_args,
     }
-    for input_path, output_path, metadata_file_path in zip(
-        input_paths, output_paths, metadata_file_paths
+    for input_path, output_path in zip(
+        input_paths, output_paths
     ):
+        output_dir = Path(output_path).parent
+        metadata_file_path = output_dir / "metadata.json"
         model.generation_with_resume(
             input_file=input_path,
             output_file=output_path,

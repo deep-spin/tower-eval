@@ -320,9 +320,9 @@ def get_sacrebleu_segment_scores(
 def get_eval_args_given_task(
     eval_args: Dict[str, str],
     task_name: str,
-    eval_data_dir: Path,
     subtask: str,
     gen_output_dir: Path,
+    eval_data_dir: Path,
     eval_output_dir: Path,
     model_type: str,
     model_name: str,
