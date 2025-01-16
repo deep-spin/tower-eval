@@ -52,7 +52,7 @@ class Generator(ABC):
         output_file: str,
         metadata: dict,
         metadata_file: str,
-        overwrite_generations: bool,
+        overwrite_generations: bool = False,
     ) -> Tuple[List[str], List[str], dict, int, int]:
         """ """
         total_lines = len(input_lines)
