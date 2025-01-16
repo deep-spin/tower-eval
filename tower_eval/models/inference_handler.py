@@ -52,21 +52,23 @@ class Generator(ABC):
         output_file: str,
         metadata: dict,
         metadata_file: str,
+        overwrite_generations: bool = False,
     ) -> Tuple[List[str], List[str], dict, int, int]:
         """ """
         total_lines = len(input_lines)
-        if os.path.exists(output_file):
+        if os.path.exists(output_file) and not overwrite_generations:
             processed_lines = read_lines(output_file, unescape_newline=True)
+            num_processed_lines = get_num_processed_lines(output_file)
         else:
             processed_lines = []
+            num_processed_lines = 0
         # We assume that if the metadata file exists it already contains the information of the generation times.
         # If it doesn't exist, then the metadata will be the config of the task and we will add the generation_time field to it
-        if os.path.exists(metadata_file):
+        if os.path.exists(metadata_file) and not overwrite_generations:
             metadata = load_json_file(metadata_file)
         else:
             metadata["generation_time"] = []
 
-        num_processed_lines = get_num_processed_lines(output_file)
         assert (
             num_processed_lines <= total_lines
         ), f"MORE PROCESSED LINES ({num_processed_lines}) THAN INPUT LINES ({total_lines})!"
@@ -131,7 +133,7 @@ class Generator(ABC):
                 pbar.update(len(batch))
 
     def generation_with_resume(
-        self, output_file: str, input_file: str, metadata: dict, metadata_file: str
+        self, output_file: str, input_file: str, metadata: dict, metadata_file: str, overwrite_generations: bool = False
     ):
         """
         Writes generated output to file, resuming from last line generated.
@@ -140,7 +142,7 @@ class Generator(ABC):
         input_lines = read_lines(input_file, unescape_newline=True)
         # update input lines, given the already processed lines; store this information
         input_lines, processed_lines, metadata, num_processed_lines, total_lines = (
-            self.assess_progress(input_lines, output_file, metadata, metadata_file)
+            self.assess_progress(input_lines, output_file, metadata, metadata_file, overwrite_generations)
         )
         # perform the generation to a file
         self.generate_to_file(
