@@ -450,7 +450,7 @@ def get_langs(lp):
         "cs",
         "is",
         "sv",
-        "sv-sv",
+        "sv-se",
         "ar",
         "tr",
         "el",
