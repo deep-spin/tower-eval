@@ -20,7 +20,7 @@ class Seq2Seq(Generator):
 
     def __init__(
         self,
-        model: str = None,
+        model_dir: str = None,
         batch_size: int = 16,
         model_family: str = None,
         max_tokens: int = 1024,
@@ -32,12 +32,11 @@ class Seq2Seq(Generator):
         self.batch_size = kwargs.get("batch_size", batch_size)
         self.max_tokens = kwargs.get("max_tokens", max_tokens)
         self.do_sample = kwargs.get("do_sample", do_sample)
-        self.model_id = kwargs.get("model", model)
+        self.model_dir = kwargs.get("model_dir", model_dir)
         self.model_family = kwargs.get("model_family", model_family)
-        self.max_tokens = kwargs.get("max_tokens", max_tokens)
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_id)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_dir)
         self.model = AutoModelForSeq2SeqLM.from_pretrained(
-            self.model_id, device_map="auto"
+            self.model_dir, device_map="auto"
         )
         self.hf_generate_kwargs = hf_generate_kwargs
 
