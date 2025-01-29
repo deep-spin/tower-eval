@@ -30,7 +30,7 @@ class VLLM(Generator):
             self.stop_sequences = None
         else:
             self.stop_sequences = stop_sequences
-        self.temperature = temperature
+        self.temperature = kwargs.get("temperature", temperature)
         self.seed = seed
         self.model_dir = kwargs.get("model_dir")
         self.run_async = run_async
