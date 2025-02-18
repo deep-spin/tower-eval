@@ -1,13 +1,20 @@
 import torch
+import sys
+from loguru import logger
+
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
     StoppingCriteriaList,
     StopStringCriteria,
 )
-
+from typing import List
 from tower_eval.models.inference_handler import Generator
-
+logger.add(
+        sys.stderr,
+        colorize=True,
+        format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {message}",
+    )
 
 class HF(Generator):
     """HF Generate Wrapper."""
@@ -20,7 +27,7 @@ class HF(Generator):
         run_async: bool = True,
         batch_size: int = 16,
         trust_remote_code: bool = True,
-        temperature: float = 0.0,  # greedy by default
+        temperature: float = 0.0,
         strip_output: bool = False,
         **kwargs
     ) -> None:
@@ -33,9 +40,20 @@ class HF(Generator):
         self.batch_size = batch_size
         self.trust_remote_code = trust_remote_code
         self.strip_output = strip_output
+        self.do_sample = kwargs.get("do_sample", False)
+        self.top_p = kwargs.get("top_p")
+        self.top_k = kwargs.get("top_k")
+        if not self.do_sample and self.temperature == 0.0:
+            logger.opt(colors=True).warning("<red>For greedy decoding you should only set</red> <yellow>do_sample</yellow> <red>to</red> <yellow>False</yellow> "
+                                            "<red>and</red> <yellow>temperature</yellow> <red>to</red> <yellow>0.0</yellow>."
+                                            "<red> I am going to set</red> <yellow>do_sample=False</yellow> <red>and</red> <yellow>temperature=None</yellow> <red>which will result in greedy generation.</red>")
+            self.do_sample = False
+            self.temperature = None
         # load tokenizer
         self.tokenizer = AutoTokenizer.from_pretrained(
-            self.model_dir, trust_remote_code=self.trust_remote_code
+            self.model_dir, 
+            trust_remote_code=self.trust_remote_code,
+            padding_side='left'
         )
         if stop_sequences:
             self.stopping_criteria = StoppingCriteriaList(
@@ -66,7 +84,11 @@ class HF(Generator):
         outputs = self.model.generate(
             **inputs,
             max_new_tokens=self.max_tokens,
-            stopping_criteria=self.stopping_criteria
+            stopping_criteria=self.stopping_criteria,
+            temperature=self.temperature,
+            do_sample=self.do_sample,
+            top_p=self.top_p,
+            top_k=self.top_k,
         )
         # decode only the generated part of the text
         generated_text = self.tokenizer.decode(
@@ -77,6 +99,42 @@ class HF(Generator):
             generated_text = generated_text.strip()
 
         return generated_text
+
+    def _batch_generate(self, input_lines: List[str]) -> List[str]:
+        if self.tokenizer.pad_token is None:
+            self.tokenizer.pad_token = self.tokenizer.eos_token
+        inputs = self.tokenizer(
+            input_lines,
+            return_token_type_ids=False,
+            padding=True,
+            truncation=True,
+            return_tensors="pt",
+            return_attention_mask=True
+        ).to(self.device)
+        model_output = self.model.generate(
+            **inputs,
+            max_new_tokens=self.max_tokens,
+            stopping_criteria=self.stopping_criteria,
+            pad_token_id=self.tokenizer.pad_token_id,
+            temperature=self.temperature,
+            do_sample=self.do_sample,
+            top_p=self.top_p,
+            top_k=self.top_k,
+        )
+        generations = []
+        for i, output in enumerate(model_output):
+            # Get the length of the original input for this example
+            input_length = len(inputs["input_ids"][i].nonzero())
+            # Decode only the newly generated tokens
+            generated_text = self.tokenizer.decode(
+                output[input_length:],
+                skip_special_tokens=True,
+                clean_up_tokenization_spaces=True
+            )
+            if self.strip_output:
+                generated_text = generated_text.strip()
+            generations.append(generated_text)
+        return generations
 
     def apply_chat_template(self, input_line: str) -> str:
         if self.system_prompt is not None:
