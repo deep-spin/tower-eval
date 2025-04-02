@@ -34,6 +34,7 @@ metricx = {git = "https://github.com/ricardorei/metricx.git"}
 vllm = "^0.6.4"
 anthropic = "^0.40.0"
 cohere = "^5.13.3"
+deepl = "^1.21.1"
 
 [tool.poetry.dev-dependencies]
 mock = ">=3.0.5,<4.0.0"
