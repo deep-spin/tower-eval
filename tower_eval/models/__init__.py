@@ -5,8 +5,9 @@ from tower_eval.models.openAI.generator import OpenAI
 from tower_eval.models.seq2seq.generator import Seq2Seq
 from tower_eval.models.vertexAI.generator import VertexAI
 from tower_eval.models.vllm.generator import VLLM
+from tower_eval.models.deepl.generator import DeepL
 
 available_models = {
     model.model_name(): model
-    for model in [OpenAI, VLLM, VertexAI, Anthropic, Cohere, Seq2Seq, HF]
+    for model in [OpenAI, VLLM, VertexAI, Anthropic, Cohere, Seq2Seq, HF, DeepL]
 }
