@@ -1,0 +1,24 @@
+gen_data_dir: "TowerEval-Data-v0.1/data/instructions/0_shot"
+eval_data_dir: "TowerEval-Data-v0.1/data/raw_data"
+gen_output_dir: "TowerEval-Data-v0.1/generations/0_shot"
+eval_output_dir: "TowerEval-Data-v0.1/evaluations/0_shot"
+
+tasks: 
+  - name: mt
+    subtasks:
+      flores.en-de:
+    metrics:
+      chrf:
+models:
+  - name: gpt-4o-mini
+    type: litellm
+    arguments:
+      model: openai/gpt-4o-mini
+      temperature: 0.0
+      system_prompt: "Provide only the translated text without any additional words or phrases."
+  - name: gemini-2.5-flash
+    type: litellm
+    arguments:
+      model: vertex_ai/gemini-2.5-flash
+      temperature: 0.0
+      system_prompt: "Provide only the translated text without any additional words or phrases."
